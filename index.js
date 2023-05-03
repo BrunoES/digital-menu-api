@@ -75,7 +75,14 @@ server.post("/menu-items", function(req, res, next) {
 server.post("/pedidos", function(req, res, next) {
     var pedido = req.body;
 
-    var sqlPedido = `INSERT INTO digital_menu.pedidos (id_customer, customer_name, total, obs) VALUES ('${pedido.idCustomer}', '${pedido.customerName}', '${pedido.total}', '${pedido.obs}')`
+    var sqlCliente = `INSERT INTO digital_menu.clientes (customer_name) VALUES ('${pedido.customerName}')`
+
+    con.query(sqlCliente, function(err, result) {
+        if (err) throw err;
+        console.log(result);
+    });
+
+    var sqlPedido = `INSERT INTO digital_menu.pedidos (id_customer, total, obs) VALUES ('${pedido.idCustomer}', '${pedido.total}', '${pedido.obs}')`
 
     con.query(sqlPedido, function(err, result) {
         if (err) throw err;

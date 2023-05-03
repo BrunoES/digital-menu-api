@@ -26,5 +26,6 @@ CREATE TABLE `pedidos` (
   `id_customer` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
   `total` float NOT NULL,
   `obs` varchar(100) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `date_hour` datetime DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci
