@@ -1,11 +1,11 @@
 const restify = require("restify");
 const mysql = require("mysql");
-const corsMiddleware = require("restify-cors-middleware");
+const corsMiddleware = require("restify-cors-middleware2");
 
 const cors = corsMiddleware({
   origins: ["*"],
-  allowHeaders: ["Authorization"],
-  exposeHeaders: ["Authorization"]
+  allowHeaders: ["*"],
+  exposeHeaders: ["*"]
 });
 
 var con = mysql.createConnection({
@@ -20,8 +20,19 @@ const server = restify.createServer({
 });
 
 server.use(restify.plugins.bodyParser({ mapParams: true }));
+server.use(restify.plugins.acceptParser(server.acceptable));
+server.use(restify.plugins.queryParser());
 server.pre(cors.preflight); // Precisa usar restify 7.x.x + restify-cors-middleware para ser compatível com cors preflight.
 server.use(cors.actual);
+
+server.pre((req, res, next) => {
+    console.info(`${req.method} - ${req.url}`);
+    return next();
+});
+
+server.opts("/menu-items", function(req, res, next) {
+    console.log(req);
+});
 
 // Get All
 server.get("/menu-items", function(req, res, next) {
@@ -36,8 +47,7 @@ server.get("/menu-items", function(req, res, next) {
 // Get By Id
 server.get("/menu-items/:id", function (req, res, next) {
     var id = req.params.id;
-    var titulo = 'teste';
-
+    
     var sql = "SELECT * FROM digital_menu.menu_items WHERE id = ?";
     con.query(sql, id, function (err, result, fields) {
         if (err) throw err;
@@ -59,6 +69,28 @@ server.post("/menu-items", function(req, res, next) {
         console.log(result);
         res.send("Linhas inseridas: " + result.affectedRows);
     });
+});
+
+// Post
+server.post("/pedidos", function(req, res, next) {
+    var pedido = req.body;
+
+    var sqlPedido = `INSERT INTO digital_menu.pedidos (id_customer, customer_name, total, obs) VALUES ('${pedido.idCustomer}', '${pedido.customerName}', '${pedido.total}', '${pedido.obs}')`
+
+    con.query(sqlPedido, function(err, result) {
+        if (err) throw err;
+        console.log(result);
+        res.send("Linhas inseridas: " + result.affectedRows);
+    });
+
+    //var sqlMenuItemsPedidos = `INSERT INTO digital_menu.menu_items_pedidos (id_item, id_pedido, quantity, price) VALUES ('${meuItem.name}', '${meuItem.description}', '${meuItem.price}', '${meuItem.img_url}')`
+
+/*
+    con.query(sql, function(err, result) {
+        if (err) throw err;
+        console.log(result);
+        res.send("Linhas inseridas: " + result.affectedRows);
+    });*/
 });
 
 // Put
