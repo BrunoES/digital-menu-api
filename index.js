@@ -74,30 +74,21 @@ server.post("/menu-items", function(req, res, next) {
 // Post
 server.post("/pedidos", function(req, res, next) {
     var pedido = req.body;
+    var checkoutItems = pedido.checkoutItems; 
+    var customerId;
 
-    var sqlCliente = `INSERT INTO digital_menu.clientes (customer_name) VALUES ('${pedido.customerName}')`
+    console.log("ID: " + pedido.customerId);
+    console.log(pedido);
+    if(parseInt(pedido.customerId) > 0) {
+        // Usuário já existente;
+        customerId = pedido.customerId;
+        insertCheckout(pedido, checkoutItems, customerId);
+    } else {
+        // Primeiro pedido;
+        insertCustomer(pedido, checkoutItems, customerId);
+    }
 
-    con.query(sqlCliente, function(err, result) {
-        if (err) throw err;
-        console.log(result);
-    });
-
-    var sqlPedido = `INSERT INTO digital_menu.pedidos (id_customer, total, obs) VALUES ('${pedido.idCustomer}', '${pedido.total}', '${pedido.obs}')`
-
-    con.query(sqlPedido, function(err, result) {
-        if (err) throw err;
-        console.log(result);
-        res.send("Linhas inseridas: " + result.affectedRows);
-    });
-
-    //var sqlMenuItemsPedidos = `INSERT INTO digital_menu.menu_items_pedidos (id_item, id_pedido, quantity, price) VALUES ('${meuItem.name}', '${meuItem.description}', '${meuItem.price}', '${meuItem.img_url}')`
-
-/*
-    con.query(sql, function(err, result) {
-        if (err) throw err;
-        console.log(result);
-        res.send("Linhas inseridas: " + result.affectedRows);
-    });*/
+    res.send("Linhas inseridas com sucesso.");
 });
 
 // Put
@@ -148,3 +139,60 @@ con.connect(function(err) {
 });
 
 console.log("Running");
+
+// --
+
+function insertCustomer(pedido, checkoutItems, customerId) {
+    var sqlCliente = `INSERT INTO digital_menu.clientes (customer_name) VALUES ('${pedido.customerName}')`
+    con.query(sqlCliente, function(err, result) {
+        if (err) throw err;
+        console.log(result);
+        customerId = result.insertId;
+
+        insertCheckout(pedido, checkoutItems, customerId);
+    });
+}
+
+function insertCheckout(pedido, checkoutItems, customerId) {
+    var sqlPedido = `INSERT INTO digital_menu.pedidos (id_customer, total, obs) VALUES ('${customerId}', '${pedido.total}', '${pedido.obs}')`
+    con.query(sqlPedido, function(err, result) {
+        if (err) throw err;
+        console.log(result);
+        pedidoId = result.insertId;
+
+        insertCheckoutItems(checkoutItems, pedidoId);
+    });
+}
+
+function insertCheckoutItems(checkoutItems, pedidoId) {
+    insertCheckoutItemRecursive(checkoutItems, 0, pedidoId);
+
+    /*checkoutItems.forEach(item => {
+        console.dir("Inserindo item: ");
+        console.dir(item);
+        var sqlMenuItemsPedidos = `INSERT INTO digital_menu.menu_items_pedidos (id_item, id_pedido, quantity, price) VALUES ('${item.itemId}', '${pedidoId}', '${item.quantity}', '${item.price}')`
+        con.query(sqlMenuItemsPedidos, function(err, result) {
+            if (err) throw err;
+            console.log(result);
+        });    
+    });*/
+}
+
+function insertCheckoutItemRecursive(checkoutItems, index, pedidoId) {
+    var item = checkoutItems[index];
+
+    console.dir("Inserindo item: ");
+    console.dir(item);
+
+    var sqlMenuItemsPedidos = `INSERT INTO digital_menu.menu_items_pedidos (id_item, id_pedido, quantity, price) VALUES ('${item.itemId}', '${pedidoId}', '${item.quantity}', '${item.price}')`
+    con.query(sqlMenuItemsPedidos, function(err, result) {
+        if (err) throw err;
+        console.log(result);
+
+        console.log("Size:" + checkoutItems.length);
+        index++;
+        if(index < checkoutItems.length) {
+            insertCheckoutItemRecursive(checkoutItems, index, pedidoId);
+        }
+    });    
+}
