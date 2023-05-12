@@ -2,6 +2,9 @@ const restify = require("restify");
 const mysql = require("mysql");
 const corsMiddleware = require("restify-cors-middleware2");
 
+const fs = require("fs");
+const path = require("path");
+
 const cors = corsMiddleware({
   origins: ["*"],
   allowHeaders: ["*"],
@@ -36,11 +39,36 @@ server.opts("/menu-items", function(req, res, next) {
 
 // Get All
 server.get("/menu-items", function(req, res, next) {
+    var response = [];
+    var countMenuItemsProcessados = 0;
     var sql = "SELECT * FROM digital_menu.menu_items";
+    
     con.query(sql, function (err, result, fields) {
         if (err) throw err;
         console.log(result);
-        res.send(result);
+
+        result.forEach(menuItem => {
+
+            const fileExists = fs.existsSync(menuItem.img_url);
+            console.log(fileExists);
+            if(fileExists) {
+                fs.readFile(menuItem.img_url, {encoding: 'base64'}, function(err, content) {
+                    response.push({
+                        menuItem: menuItem,
+                        base64Img: content
+                    });
+                    
+                    countMenuItemsProcessados++;
+
+                    console.log(countMenuItemsProcessados);
+                    console.log(result.length);
+
+                    if(countMenuItemsProcessados === result.length) {
+                        res.send(response);
+                    }
+                })
+            }
+        })
     });
 });
 
@@ -69,26 +97,6 @@ server.post("/menu-items", function(req, res, next) {
         console.log(result);
         res.send("Linhas inseridas: " + result.affectedRows);
     });
-});
-
-// Post
-server.post("/pedidos", function(req, res, next) {
-    var pedido = req.body;
-    var checkoutItems = pedido.checkoutItems; 
-    var customerId;
-
-    console.log("ID: " + pedido.customerId);
-    console.log(pedido);
-    if(parseInt(pedido.customerId) > 0) {
-        // Usuário já existente;
-        customerId = pedido.customerId;
-        insertCheckout(pedido, checkoutItems, customerId);
-    } else {
-        // Primeiro pedido;
-        insertCustomer(pedido, checkoutItems, customerId);
-    }
-
-    res.send("Linhas inseridas com sucesso.");
 });
 
 // Put
@@ -129,6 +137,60 @@ server.del("/menu-items/:id", function(req, res, next) {
     });
 });
 
+// --
+
+// Get By Id
+server.get("/pedidos/:id", function (req, res, next) {
+    var customerId = req.params.id;
+    var response = [];
+    var countPedidosProcessados = 0;
+    var qtdPedidos = 0;
+
+    var sqlPedidos = "SELECT * FROM digital_menu.pedidos WHERE id_customer = ? ORDER BY date_hour DESC";
+    con.query(sqlPedidos, customerId, function (err, resultPedido, fields) {
+        if (err) throw err;
+        qtdPedidos = resultPedido.length;
+        resultPedido.forEach(pedido => {
+            var sqlDetalheItems = "SELECT id_pedido, id_menu, name, price, quantity FROM digital_menu.v_menu_items_pedidos_detalhe WHERE id_pedido = ?";
+            con.query(sqlDetalheItems, pedido.id, function (err, resultItems, fields) {
+                if (err) throw err;
+
+                response.push({
+                    pedido: pedido,
+                    detalheItems: resultItems
+                });
+                countPedidosProcessados++;
+
+                if(countPedidosProcessados === qtdPedidos) {
+                    res.send(response);
+                }
+            });    
+        });
+    });
+});
+
+// Post
+server.post("/pedidos", function(req, res, next) {
+    var pedido = req.body;
+    var checkoutItems = pedido.checkoutItems; 
+    var customerId;
+
+    console.log("ID: " + pedido.customerId);
+    console.log(pedido);
+    if(parseInt(pedido.customerId) > 0) {
+        // Usuário já existente;
+        customerId = pedido.customerId;
+        insertCheckout(pedido, checkoutItems, customerId);
+    } else {
+        // Primeiro pedido;
+        insertCustomer(pedido, checkoutItems, customerId);
+    }
+    
+    res.send("Linhas inseridas com sucesso.");
+});
+
+// --
+
 server.listen(8080, function() {
     console.log("Listening at %s", server.url);
 });
@@ -141,6 +203,10 @@ con.connect(function(err) {
 console.log("Running");
 
 // --
+
+function selectPedidoItemsDetalhe() {
+    
+}
 
 function insertCustomer(pedido, checkoutItems, customerId) {
     var sqlCliente = `INSERT INTO digital_menu.clientes (customer_name) VALUES ('${pedido.customerName}')`
@@ -195,4 +261,17 @@ function insertCheckoutItemRecursive(checkoutItems, index, pedidoId) {
             insertCheckoutItemRecursive(checkoutItems, index, pedidoId);
         }
     });    
+}
+
+function getImageFromDisk(pathName) {
+    const fileExists = fs.existsSync(pathName);
+    console.log(pathName);
+    console.log(fileExists);
+    if(fileExists) {
+        fs.readFileSync(pathName, {encoding: 'base64'}, function(err, content) {
+            //console.dir(err);
+            //console.dir(content);
+            return content;
+        })
+    }
 }
