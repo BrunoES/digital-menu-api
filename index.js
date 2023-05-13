@@ -4,6 +4,7 @@ const corsMiddleware = require("restify-cors-middleware2");
 
 const fs = require("fs");
 const path = require("path");
+const { v4: uuidv4 } = require('uuid');
 
 const cors = corsMiddleware({
   origins: ["*"],
@@ -21,6 +22,10 @@ const server = restify.createServer({
   name: "digital-menu-api",
   version: "1.0.0"
 });
+
+const customerId = 1;
+const sep = path.sep;
+const pathImages = `.${sep}${sep}media${sep}${sep}imgs`;
 
 server.use(restify.plugins.bodyParser({ mapParams: true }));
 server.use(restify.plugins.acceptParser(server.acceptable));
@@ -87,9 +92,18 @@ server.get("/menu-items/:id", function (req, res, next) {
 // Post
 server.post("/menu-items", function(req, res, next) {
     var meuItem = req.body;
-    var sql = `INSERT INTO digital_menu.menu_items (name, description, price, img_url) VALUES ('${meuItem.name}', '${meuItem.description}', '${meuItem.price}', '${meuItem.img_url}')`
+    var image = meuItem.image;
+    var base64Img = image.base64.split(';base64,').pop();
+    var imgExtension = image.type.replace('image/', '');
+    var imgName = `customer-${customerId}-product-${uuidv4()}.${imgExtension}`;
+    var imgPathName = `${pathImages}${sep}${sep}${imgName}`;
 
     console.log(meuItem);
+
+    fs.writeFileSync(imgPathName, base64Img, 'base64');
+
+    var sql = `INSERT INTO digital_menu.menu_items (name, description, price, img_url) VALUES ('${meuItem.name}', '${meuItem.description}', '${meuItem.price}', '${imgPathName}')`
+
     console.log(sql);
 
     con.query(sql, function(err, result) {
