@@ -91,18 +91,18 @@ server.get("/menu-items/:id", function (req, res, next) {
 
 // Post
 server.post("/menu-items", function(req, res, next) {
-    var meuItem = req.body;
-    var image = meuItem.image;
+    var menuItem = req.body;
+    var image = menuItem.image;
     var base64Img = image.base64.split(';base64,').pop();
     var imgExtension = image.type.replace('image/', '');
-    var imgName = `customer-${customerId}-product-${uuidv4()}.${imgExtension}`;
-    var imgPathName = `${pathImages}${sep}${sep}${imgName}`;
+    var imgName = getImageName(customerId, imgExtension);
+    var imgPathName = getImagePathName(imgName);
 
-    console.log(meuItem);
+    console.log(menuItem);
 
     fs.writeFileSync(imgPathName, base64Img, 'base64');
 
-    var sql = `INSERT INTO digital_menu.menu_items (name, description, price, img_url) VALUES ('${meuItem.name}', '${meuItem.description}', '${meuItem.price}', '${imgPathName}')`
+    var sql = `INSERT INTO digital_menu.menu_items (name, description, price, img_url) VALUES ('${menuItem.name}', '${menuItem.description}', '${menuItem.price}', '${imgPathName}')`
 
     console.log(sql);
 
@@ -116,31 +116,48 @@ server.post("/menu-items", function(req, res, next) {
 // Put
 server.put("/menu-items", function(req, res, next) {
     var menuItem = req.body;
+    var image = menuItem.image;
+    var base64Img = "";
+    var imgExtension = "";
+    var isImagemAlterada = (image.base64 != "");
+
+    if(isImagemAlterada) {
+        base64Img = image.base64.split(';base64,').pop();
+        imgExtension = image.type.replace('image/', '');
+    }
 
     console.log("Alterando item de id: %d ", menuItem.id);
-    console.dir(menuItem);
 
-    var sql = `UPDATE digital_menu.menu_items 
-                  SET name    = '${menuItem.name}',
-                      description = '${menuItem.description}'
-                      price = '${menuItem.price}'
-                      img_url = '${menuItem.img_url}'
-               WHERE id = ${menuItem.id}`;
-
-    console.log(menuItem);
-    console.log(sql);
-
-    con.query(sql, function(err, result) {
+    var sqlSelect = "SELECT * FROM digital_menu.menu_items WHERE id = ?";
+    con.query(sqlSelect, menuItem.id, function (err, result, fields) {
         if (err) throw err;
-        console.log(result);
-        res.send("Linhas alteradas: " + result.affectedRows);
+
+        if(isImagemAlterada) {
+            var imgName = getImageName(customerId, imgExtension);
+            var imgPathName = getImagePathName(imgName);
+            fs.writeFileSync(imgPathName, base64Img, 'base64');        }
+
+        var sqlUpdate = `UPDATE digital_menu.menu_items 
+                            SET name    = '${menuItem.name}',
+                                description = '${menuItem.description}',
+                                price = '${menuItem.price}',
+                                img_url = ` + (isImagemAlterada ? `'${imgPathName}'` : 'img_url') +
+                        ` WHERE id = ${menuItem.id}`;
+
+        console.log(sqlUpdate);
+
+        con.query(sqlUpdate, function(err, result) {
+            if (err) throw err;
+            console.log(result);
+            res.send("Linhas alteradas: " + result.affectedRows);
+        });
     });
 });
 
 // Delete
 server.del("/menu-items/:id", function(req, res, next) {
     var id = req.params.id;
-    console.log("Deletando livro de ID: %d", id);
+    console.log("Deletando item de ID: %d", id);
 
     var sql = "DELETE FROM digital_menu.menu_items WHERE id = ?";
     
@@ -275,6 +292,14 @@ function insertCheckoutItemRecursive(checkoutItems, index, pedidoId) {
             insertCheckoutItemRecursive(checkoutItems, index, pedidoId);
         }
     });    
+}
+
+function getImageName(customerId, imgExtension) {
+    return `customer-${customerId}-product-${uuidv4()}.${imgExtension}`;
+}
+
+function getImagePathName(imgName) {
+    return `${pathImages}${sep}${sep}${imgName}`;
 }
 
 function getImageFromDisk(pathName) {
