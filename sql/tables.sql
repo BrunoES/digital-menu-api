@@ -29,3 +29,12 @@ CREATE TABLE `pedidos` (
   `date_hour` datetime DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci
+
+CREATE TABLE `user_empresa` (
+  `email` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+  `password` varchar(12) COLLATE utf8_unicode_ci NOT NULL,
+  `blocked` tinyint(1) DEFAULT '0',
+  `active` tinyint(1) DEFAULT '0',
+  PRIMARY KEY (`email`),
+  UNIQUE KEY `email_UNIQUE` (`email`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci

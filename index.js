@@ -46,7 +46,7 @@ server.opts("/menu-items", function(req, res, next) {
 server.get("/menu-items", function(req, res, next) {
     var response = [];
     var countMenuItemsProcessados = 0;
-    var sql = "SELECT * FROM digital_menu.menu_items";
+    var sql = "SELECT * FROM digital_menu.menu_items order by id";
     
     con.query(sql, function (err, result, fields) {
         if (err) throw err;
@@ -235,10 +235,6 @@ console.log("Running");
 
 // --
 
-function selectPedidoItemsDetalhe() {
-    
-}
-
 function insertCustomer(pedido, checkoutItems, customerId) {
     var sqlCliente = `INSERT INTO digital_menu.clientes (customer_name) VALUES ('${pedido.customerName}')`
     con.query(sqlCliente, function(err, result) {
@@ -263,16 +259,6 @@ function insertCheckout(pedido, checkoutItems, customerId) {
 
 function insertCheckoutItems(checkoutItems, pedidoId) {
     insertCheckoutItemRecursive(checkoutItems, 0, pedidoId);
-
-    /*checkoutItems.forEach(item => {
-        console.dir("Inserindo item: ");
-        console.dir(item);
-        var sqlMenuItemsPedidos = `INSERT INTO digital_menu.menu_items_pedidos (id_item, id_pedido, quantity, price) VALUES ('${item.itemId}', '${pedidoId}', '${item.quantity}', '${item.price}')`
-        con.query(sqlMenuItemsPedidos, function(err, result) {
-            if (err) throw err;
-            console.log(result);
-        });    
-    });*/
 }
 
 function insertCheckoutItemRecursive(checkoutItems, index, pedidoId) {
@@ -300,17 +286,4 @@ function getImageName(customerId, imgExtension) {
 
 function getImagePathName(imgName) {
     return `${pathImages}${sep}${sep}${imgName}`;
-}
-
-function getImageFromDisk(pathName) {
-    const fileExists = fs.existsSync(pathName);
-    console.log(pathName);
-    console.log(fileExists);
-    if(fileExists) {
-        fs.readFileSync(pathName, {encoding: 'base64'}, function(err, content) {
-            //console.dir(err);
-            //console.dir(content);
-            return content;
-        })
-    }
 }
