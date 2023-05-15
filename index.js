@@ -287,6 +287,36 @@ server.put("/mesas", function(req, res, next) {
     });
 });
 
+// Put
+server.patch("/mesas", function(req, res, next) {
+    var mesa = req.body;
+
+    console.log("Patch em mesa de número: %d ", mesa.tableNumber);
+    console.dir(mesa);
+
+    var sql = `UPDATE digital_menu.mesa_empresa 
+                  SET complement    = '${mesa.complement}'
+               WHERE table_number = '${mesa.tableNumber}'
+                 AND id_company   = '${companyId}'`
+
+    con.query(sql, function(err, result) {
+        if (err) throw err;
+        console.log(result);
+
+        if(result.affectedRows == 0) {
+            var sqlInsert = `INSERT INTO digital_menu.mesa_empresa (table_number, id_company, complement) VALUES ('${mesa.tableNumber}', '${companyId}', '${mesa.complement}')`
+
+            con.query(sqlInsert, function(err, result) {
+                if (err) throw err;
+                console.log(result);
+                res.send("Linhas inseridas: " + result.affectedRows);
+            });
+        } else {
+            res.send("Linhas alteradas: " + result.affectedRows);
+        }
+    });
+});
+
 // Delete
 server.del("/mesas/:tableNumber", function(req, res, next) {
     var tableNumber = req.params.tableNumber;
