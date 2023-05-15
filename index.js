@@ -80,18 +80,6 @@ server.get("/menu-items", function(req, res, next) {
     });
 });
 
-// Get By Id
-server.get("/menu-items/:id", function (req, res, next) {
-    var id = req.params.id;
-    
-    var sql = "SELECT * FROM digital_menu.menu_items WHERE id = ?";
-    con.query(sql, id, function (err, result, fields) {
-        if (err) throw err;
-        console.log(result);
-        res.send(result);
-    });
-});
-
 // Post
 server.post("/menu-items", function(req, res, next) {
     var menuItem = req.body;
@@ -238,56 +226,7 @@ server.get("/mesas", function(req, res, next) {
     });
 });
 
-// Get By Id
-server.get("/mesas/:id", function (req, res, next) {
-    var tableNumber = req.params.tableNumber;
-
-    var sql = "SELECT * FROM digital_menu.mesa_empresa WHERE table_number = ?";
-    con.query(sql, tableNumber, function (err, result, fields) {
-        if (err) throw err;
-        console.log(result);
-        res.send(result);
-    });
-});
-
-// Post
-server.post("/mesas", function(req, res, next) {
-    var mesa = req.body;
-    var sql = `INSERT INTO digital_menu.mesa_empresa (table_number, id_company, complement) VALUES ('${mesa.tableNumber}', '${companyId}', '${mesa.complement}')`
-
-    console.log(mesa);
-    console.log(sql);
-
-    con.query(sql, function(err, result) {
-        if (err) throw err;
-        console.log(result);
-        res.send("Linhas inseridas: " + result.affectedRows);
-    });
-});
-
-// Put
-server.put("/mesas", function(req, res, next) {
-    var mesa = req.body;
-
-    console.log("Alterando mesa de número: %d ", mesa.tableNumber);
-    console.dir(mesa);
-
-    var sql = `UPDATE digital_menu.mesa_empresa 
-                  SET complement    = '${mesa.complement}'
-               WHERE table_number = '${mesa.tableNumber}'
-                 AND id_company   = '${companyId}'`
-               
-    console.log(mesa);
-    console.log(sql);
-
-    con.query(sql, function(err, result) {
-        if (err) throw err;
-        console.log(result);
-        res.send("Linhas alteradas: " + result.affectedRows);
-    });
-});
-
-// Put
+// Patch
 server.patch("/mesas", function(req, res, next) {
     var mesa = req.body;
 
