@@ -30,11 +30,30 @@ CREATE TABLE `pedidos` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci
 
+CREATE TABLE `digital_menu`.`company` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `name` VARCHAR(60) NOT NULL,
+  `active` TINYINT NULL,
+  PRIMARY KEY (`id`))
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8
+COLLATE = utf8_unicode_ci;
+
 CREATE TABLE `user_empresa` (
   `email` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
   `password` varchar(12) COLLATE utf8_unicode_ci NOT NULL,
+  `id_company` int NOT NULL,
   `blocked` tinyint(1) DEFAULT '0',
   `active` tinyint(1) DEFAULT '0',
   PRIMARY KEY (`email`),
   UNIQUE KEY `email_UNIQUE` (`email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci
+
+CREATE TABLE `digital_menu`.`mesa_empresa` (
+  `table_number` INT NOT NULL,
+  `id_company` INT NOT NULL,
+  `complement` VARCHAR(60) NULL,
+  PRIMARY KEY (`table_number`, `id_company`))
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8
+COLLATE = utf8_unicode_ci;

@@ -24,6 +24,7 @@ const server = restify.createServer({
 });
 
 const customerId = 1;
+const companyId = 1;
 const sep = path.sep;
 const pathImages = `.${sep}${sep}media${sep}${sep}imgs`;
 
@@ -41,6 +42,8 @@ server.pre((req, res, next) => {
 server.opts("/menu-items", function(req, res, next) {
     console.log(req);
 });
+
+// APIs - Menu Itens ----------------------------------------------------------------------------------
 
 // Get All
 server.get("/menu-items", function(req, res, next) {
@@ -170,6 +173,8 @@ server.del("/menu-items/:id", function(req, res, next) {
 
 // --
 
+// APIs - Pedidos ----------------------------------------------------------------------------------
+
 // Get By Id
 server.get("/pedidos/:id", function (req, res, next) {
     var customerId = req.params.id;
@@ -220,7 +225,83 @@ server.post("/pedidos", function(req, res, next) {
     res.send("Linhas inseridas com sucesso.");
 });
 
-// --
+
+// APIs - Mesas ----------------------------------------------------------------------------------
+
+// Get All
+server.get("/mesas", function(req, res, next) {
+    var sql = "SELECT * FROM digital_menu.mesa_empresa";
+    con.query(sql, function (err, result, fields) {
+        if (err) throw err;
+        console.log(result);
+        res.send(result);
+    });
+});
+
+// Get By Id
+server.get("/mesas/:id", function (req, res, next) {
+    var tableNumber = req.params.tableNumber;
+
+    var sql = "SELECT * FROM digital_menu.mesa_empresa WHERE table_number = ?";
+    con.query(sql, tableNumber, function (err, result, fields) {
+        if (err) throw err;
+        console.log(result);
+        res.send(result);
+    });
+});
+
+// Post
+server.post("/mesas", function(req, res, next) {
+    var mesa = req.body;
+    var sql = `INSERT INTO digital_menu.mesa_empresa (table_number, id_company, complement) VALUES ('${mesa.tableNumber}', '${companyId}', '${mesa.complement}')`
+
+    console.log(mesa);
+    console.log(sql);
+
+    con.query(sql, function(err, result) {
+        if (err) throw err;
+        console.log(result);
+        res.send("Linhas inseridas: " + result.affectedRows);
+    });
+});
+
+// Put
+server.put("/mesas", function(req, res, next) {
+    var mesa = req.body;
+
+    console.log("Alterando mesa de número: %d ", mesa.tableNumber);
+    console.dir(mesa);
+
+    var sql = `UPDATE digital_menu.mesa_empresa 
+                  SET complement    = '${mesa.complement}'
+               WHERE table_number = '${mesa.tableNumber}'
+                 AND id_company   = '${companyId}'`
+               
+    console.log(mesa);
+    console.log(sql);
+
+    con.query(sql, function(err, result) {
+        if (err) throw err;
+        console.log(result);
+        res.send("Linhas alteradas: " + result.affectedRows);
+    });
+});
+
+// Delete
+server.del("/mesas/:tableNumber", function(req, res, next) {
+    var tableNumber = req.params.tableNumber;
+    console.log("Deletando mesa de número: %d", tableNumber);
+
+    var sql = "DELETE FROM digital_menu.mesa_empresa WHERE table_number = ?";
+    
+    con.query(sql, tableNumber, function (err, result, fields) {
+        if (err) throw err;
+        console.log(result);
+        res.send("Linhas deletadas" + result.affectedRows);
+    });
+});
+
+// -----------------------------------------------------------------------------------------------
 
 server.listen(8080, function() {
     console.log("Listening at %s", server.url);
