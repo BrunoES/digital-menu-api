@@ -2,7 +2,7 @@ CREATE TABLE `clientes` (
   `id` int NOT NULL AUTO_INCREMENT,
   `customer_name` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
 
 CREATE TABLE `menu_items` (
   `id` int NOT NULL AUTO_INCREMENT,
@@ -11,7 +11,7 @@ CREATE TABLE `menu_items` (
   `price` float NOT NULL,
   `img_url` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
 
 CREATE TABLE `menu_items_pedidos` (
   `id_item` int NOT NULL,
@@ -19,7 +19,7 @@ CREATE TABLE `menu_items_pedidos` (
   `quantity` tinyint NOT NULL,
   `price` float NOT NULL,
   PRIMARY KEY (`id_item`,`id_pedido`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
 
 CREATE TABLE `pedidos` (
   `id` int NOT NULL AUTO_INCREMENT,
@@ -28,7 +28,7 @@ CREATE TABLE `pedidos` (
   `obs` varchar(100) COLLATE utf8_unicode_ci DEFAULT NULL,
   `date_hour` datetime DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
 
 CREATE TABLE `digital_menu`.`company` (
   `id` INT NOT NULL AUTO_INCREMENT,
@@ -47,7 +47,7 @@ CREATE TABLE `user_empresa` (
   `active` tinyint(1) DEFAULT '0',
   PRIMARY KEY (`email`),
   UNIQUE KEY `email_UNIQUE` (`email`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
 
 CREATE TABLE `digital_menu`.`mesa_empresa` (
   `table_number` INT NOT NULL,
@@ -57,3 +57,8 @@ CREATE TABLE `digital_menu`.`mesa_empresa` (
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8
 COLLATE = utf8_unicode_ci;
+
+SET character_set_client = utf8;
+SET character_set_connection = utf8;
+SET character_set_results = utf8;
+SET collation_connection = utf8_unicode_ci;
