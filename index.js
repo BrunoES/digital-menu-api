@@ -43,6 +43,22 @@ server.opts("/menu-items", function(req, res, next) {
     console.log(req);
 });
 
+// Login
+// Post
+server.post("/login", function(req, res, next) {
+    var credentials = req.body;
+
+    console.dir(credentials);
+    
+    var token = uuidv4();
+    
+    res.send({
+        access_token: token
+    });
+    
+});
+
+
 // APIs - Menu Itens ----------------------------------------------------------------------------------
 
 // Get All
@@ -218,6 +234,8 @@ server.post("/pedidos", function(req, res, next) {
 
 // Get All
 server.get("/mesas", function(req, res, next) {
+    console.log(req);
+    console.log(req.header("Authorization"));
     var sql = "SELECT * FROM digital_menu.mesa_empresa";
     con.query(sql, function (err, result, fields) {
         if (err) throw err;
