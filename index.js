@@ -5,6 +5,7 @@ const corsMiddleware = require("restify-cors-middleware2");
 const fs = require("fs");
 const path = require("path");
 const { v4: uuidv4 } = require('uuid');
+const QRCode = require('qrcode');
 
 const cors = corsMiddleware({
   origins: ["*"],
@@ -27,6 +28,9 @@ const TOKEN_NAME = 'Authorization';
 const customerId = 1;
 const sep = path.sep;
 const pathImages = `.${sep}${sep}media${sep}${sep}imgs`;
+const pathQRCodes = `.${sep}media${sep}qrcodes`;
+
+const BASE_URL_QRCODE_MESA = 'https://www.cardapil.com.br';
 
 server.use(restify.plugins.bodyParser({ mapParams: true }));
 server.use(restify.plugins.acceptParser(server.acceptable));
@@ -143,25 +147,19 @@ server.get("/menu-items", function(req, res, next) {
         result.forEach(menuItem => {
 
             const fileExists = fs.existsSync(menuItem.img_url);
+            var content = '';
+
             console.log(fileExists);
             if(fileExists) {
-                fs.readFile(menuItem.img_url, {encoding: 'base64'}, function(err, content) {
-                    response.push({
-                        menuItem: menuItem,
-                        base64Img: content
-                    });
-                    
-                    countMenuItemsProcessados++;
-
-                    console.log(countMenuItemsProcessados);
-                    console.log(result.length);
-
-                    if(countMenuItemsProcessados === result.length) {
-                        res.send(response);
-                    }
-                })
+                content = fs.readFileSync(menuItem.img_url, {encoding: 'base64'});
             }
+            response.push({
+                menuItem: menuItem,
+                base64Img: `data:image/png;base64,${content}`
+            });
         })
+
+        res.send(response);
     });
 });
 
@@ -172,7 +170,7 @@ server.post("/menu-items", function(req, res, next) {
     var image = menuItem.image;
     var base64Img = image.base64.split(';base64,').pop();
     var imgExtension = image.type.replace('image/', '');
-    var imgName = getImageName(customerId, imgExtension);
+    var imgName = getImageName(companyId, imgExtension);
     var imgPathName = getImagePathName(imgName);
 
     console.log(menuItem);
@@ -211,7 +209,7 @@ server.put("/menu-items", function(req, res, next) {
         if (err) throw err;
 
         if(isImagemAlterada) {
-            var imgName = getImageName(customerId, imgExtension);
+            var imgName = getImageName(companyId, imgExtension);
             var imgPathName = getImagePathName(imgName);
             fs.writeFileSync(imgPathName, base64Img, 'base64');        }
 
@@ -252,13 +250,34 @@ server.del("/menu-items/:id", function(req, res, next) {
 // Get All
 server.get("/mesas", function(req, res, next) {
     const companyId = getCompanyIdFromRequest(req);
+    var response = [];
+
     console.log(req);
     console.log(req.header("Authorization"));
+    
     var sql = "SELECT * FROM digital_menu.mesa_empresa";
-    con.query(sql, function (err, result, fields) {
+    con.query(sql, function (err, resultMesas, fields) {
         if (err) throw err;
-        console.log(result);
-        res.send(result);
+        console.log(resultMesas);
+        
+        resultMesas.forEach(mesa => {
+            const qrCodePathName = mesa.qrcode_url;
+            const fileExists = fs.existsSync(qrCodePathName);
+            var base64QRCode = '';
+            var content = '';
+            if(fileExists) {
+                content = fs.readFileSync(qrCodePathName, {encoding: 'base64'});
+                
+            }
+            base64QRCode = `data:image/png;base64,${content}`;
+            response.push({
+                mesa,
+                base64QRCode
+            });
+        });
+
+        console.dir(response);
+        res.send(response);
     });
 });
 
@@ -279,13 +298,24 @@ server.patch("/mesas", function(req, res, next) {
         if (err) throw err;
         console.log(result);
 
-        if(result.affectedRows == 0) {
-            var sqlInsert = `INSERT INTO digital_menu.mesa_empresa (table_number, id_company, complement) VALUES ('${mesa.tableNumber}', '${companyId}', '${mesa.complement}')`
+        if(result.affectedRows == 0) {      
 
-            con.query(sqlInsert, function(err, result) {
+            const qrCodeName = getQRCodeName(companyId);
+            const qrCodePathName = getQRCodePathName(qrCodeName);
+            const qrCodeURl = `${BASE_URL_QRCODE_MESA}/${companyId}/${mesa.tableNumber}`;
+
+            QRCode.toFile(qrCodePathName, qrCodeURl, {
+                errorCorrectionLevel: 'H'
+            }, function(err) {
                 if (err) throw err;
-                console.log(result);
-                res.send("Linhas inseridas: " + result.affectedRows);
+                console.log('QR code saved!');    
+
+                var sqlInsert = `INSERT INTO digital_menu.mesa_empresa (table_number, id_company, complement, qrcode_url) VALUES ('${mesa.tableNumber}', '${companyId}', '${mesa.complement}', '${qrCodePathName}')`;
+                con.query(sqlInsert, function(err, result) {
+                    if (err) throw err;
+                    console.log(result);
+                    res.send("Linhas inseridas: " + result.affectedRows);
+                });
             });
         } else {
             res.send("Linhas alteradas: " + result.affectedRows);
@@ -420,10 +450,18 @@ function insertCheckoutItemRecursive(checkoutItems, index, pedidoId) {
     });    
 }
 
-function getImageName(customerId, imgExtension) {
-    return `customer-${customerId}-product-${uuidv4()}.${imgExtension}`;
+function getImageName(companyId, imgExtension) {
+    return `company-${companyId}-product-${uuidv4()}.${imgExtension}`;
 }
 
 function getImagePathName(imgName) {
     return `${pathImages}${sep}${sep}${imgName}`;
+}
+
+function getQRCodeName(companyId) {
+    return `company-${companyId}-qrcode-${uuidv4()}.png`;
+}
+
+function getQRCodePathName(qrCodeName) {
+    return `${pathQRCodes}${sep}${qrCodeName}`;
 }
