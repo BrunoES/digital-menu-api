@@ -23,8 +23,8 @@ const server = restify.createServer({
   version: "1.0.0"
 });
 
+const TOKEN_NAME = 'Authorization';
 const customerId = 1;
-const companyId = 1;
 const sep = path.sep;
 const pathImages = `.${sep}${sep}media${sep}${sep}imgs`;
 
@@ -34,13 +34,13 @@ server.use(restify.plugins.queryParser());
 server.pre(cors.preflight); // Precisa usar restify 7.x.x + restify-cors-middleware para ser compatível com cors preflight.
 server.use(cors.actual);
 
-// Autenticacao
+// Filter - Autenticacao
 server.pre((req, res, next) => {
     console.info(`${req.method} - ${req.url}`);
     
+    // Se nao for /login, tenta autenticar.  
     if(req.url != "/login") {
-        var token = req.header('Authorization');
-        token = token.split(',')[0];
+        const token = getCleanTokenFromRequest(req);
         console.log(token);
 
         var sql = `SELECT * FROM digital_menu.user_token WHERE token = '${token}'`;
@@ -53,12 +53,17 @@ server.pre((req, res, next) => {
                 console.log(`Usuario ${user} autenticado`);
                 return next();
             } else {
-                return 'Acesso negado.';
+                return '401 Access denied.';
             }
         });
     } else {
         return next();
     }
+});
+
+// Get All
+server.get("/mock-endpoint", function(req, res, next) {
+    res.send(201, "OK");
 });
 
 server.opts("/menu-items", function(req, res, next) {
@@ -83,7 +88,7 @@ server.post("/login", function(req, res, next) {
             var token = uuidv4();
             insereUserToken(credentials.user, token);
             token = token + "," + result[0].id_company; // Formatando token no formato: token + id da empresa
-            res.send({
+            res.send(201, {
                 access_token: token
             });
         } else {
@@ -106,10 +111,27 @@ function insereUserToken(email, token) {
     });
 }
 
+// Pega o token limpo, sem o codigo da empresa
+function getCleanTokenFromRequest(req) {
+    const token = req.header(TOKEN_NAME);
+    if(token) return token.split(',')[0];
+    return '';
+    
+}
+
+
+// Pega codigo da empresa contido no token
+function getCompanyIdFromRequest(req) {
+    const token = req.header(TOKEN_NAME);
+    return token.split(',')[1];
+}
+
 // APIs - Menu Itens ----------------------------------------------------------------------------------
 
 // Get All
 server.get("/menu-items", function(req, res, next) {
+    const companyId = getCompanyIdFromRequest(req);
+
     var response = [];
     var countMenuItemsProcessados = 0;
     var sql = "SELECT * FROM digital_menu.menu_items order by id";
@@ -145,6 +167,7 @@ server.get("/menu-items", function(req, res, next) {
 
 // Post
 server.post("/menu-items", function(req, res, next) {
+    const companyId = getCompanyIdFromRequest(req);
     var menuItem = req.body;
     var image = menuItem.image;
     var base64Img = image.base64.split(';base64,').pop();
@@ -169,6 +192,7 @@ server.post("/menu-items", function(req, res, next) {
 
 // Put
 server.put("/menu-items", function(req, res, next) {
+    const companyId = getCompanyIdFromRequest(req);
     var menuItem = req.body;
     var image = menuItem.image;
     var base64Img = "";
@@ -210,6 +234,7 @@ server.put("/menu-items", function(req, res, next) {
 
 // Delete
 server.del("/menu-items/:id", function(req, res, next) {
+    const companyId = getCompanyIdFromRequest(req);
     var id = req.params.id;
     console.log("Deletando item de ID: %d", id);
 
@@ -222,7 +247,66 @@ server.del("/menu-items/:id", function(req, res, next) {
     });
 });
 
-// --
+// APIs - Mesas ----------------------------------------------------------------------------------
+
+// Get All
+server.get("/mesas", function(req, res, next) {
+    const companyId = getCompanyIdFromRequest(req);
+    console.log(req);
+    console.log(req.header("Authorization"));
+    var sql = "SELECT * FROM digital_menu.mesa_empresa";
+    con.query(sql, function (err, result, fields) {
+        if (err) throw err;
+        console.log(result);
+        res.send(result);
+    });
+});
+
+// Patch
+server.patch("/mesas", function(req, res, next) {
+    const companyId = getCompanyIdFromRequest(req);
+    var mesa = req.body;
+
+    console.log("Patch em mesa de número: %d ", mesa.tableNumber);
+    console.dir(mesa);
+
+    var sql = `UPDATE digital_menu.mesa_empresa 
+                  SET complement    = '${mesa.complement}'
+               WHERE table_number = '${mesa.tableNumber}'
+                 AND id_company   = '${companyId}'`
+
+    con.query(sql, function(err, result) {
+        if (err) throw err;
+        console.log(result);
+
+        if(result.affectedRows == 0) {
+            var sqlInsert = `INSERT INTO digital_menu.mesa_empresa (table_number, id_company, complement) VALUES ('${mesa.tableNumber}', '${companyId}', '${mesa.complement}')`
+
+            con.query(sqlInsert, function(err, result) {
+                if (err) throw err;
+                console.log(result);
+                res.send("Linhas inseridas: " + result.affectedRows);
+            });
+        } else {
+            res.send("Linhas alteradas: " + result.affectedRows);
+        }
+    });
+});
+
+// Delete
+server.del("/mesas/:tableNumber", function(req, res, next) {
+    const companyId = getCompanyIdFromRequest(req);
+    var tableNumber = req.params.tableNumber;
+    console.log("Deletando mesa de número: %d", tableNumber);
+
+    var sql = "DELETE FROM digital_menu.mesa_empresa WHERE table_number = ?";
+    
+    con.query(sql, tableNumber, function (err, result, fields) {
+        if (err) throw err;
+        console.log(result);
+        res.send("Linhas deletadas" + result.affectedRows);
+    });
+});
 
 // APIs - Pedidos ----------------------------------------------------------------------------------
 
@@ -265,74 +349,15 @@ server.post("/pedidos", function(req, res, next) {
     console.log("ID: " + pedido.customerId);
     console.log(pedido);
     if(parseInt(pedido.customerId) > 0) {
-        // Usuário já existente;
+        // Usuário já existente, cadastra apenas o pedido.
         customerId = pedido.customerId;
         insertCheckout(pedido, checkoutItems, customerId);
     } else {
-        // Primeiro pedido;
+        // Primeiro pedido, cadastra usuario e depois pedido.
         insertCustomer(pedido, checkoutItems, customerId);
     }
     
     res.send("Linhas inseridas com sucesso.");
-});
-
-
-// APIs - Mesas ----------------------------------------------------------------------------------
-
-// Get All
-server.get("/mesas", function(req, res, next) {
-    console.log(req);
-    console.log(req.header("Authorization"));
-    var sql = "SELECT * FROM digital_menu.mesa_empresa";
-    con.query(sql, function (err, result, fields) {
-        if (err) throw err;
-        console.log(result);
-        res.send(result);
-    });
-});
-
-// Patch
-server.patch("/mesas", function(req, res, next) {
-    var mesa = req.body;
-
-    console.log("Patch em mesa de número: %d ", mesa.tableNumber);
-    console.dir(mesa);
-
-    var sql = `UPDATE digital_menu.mesa_empresa 
-                  SET complement    = '${mesa.complement}'
-               WHERE table_number = '${mesa.tableNumber}'
-                 AND id_company   = '${companyId}'`
-
-    con.query(sql, function(err, result) {
-        if (err) throw err;
-        console.log(result);
-
-        if(result.affectedRows == 0) {
-            var sqlInsert = `INSERT INTO digital_menu.mesa_empresa (table_number, id_company, complement) VALUES ('${mesa.tableNumber}', '${companyId}', '${mesa.complement}')`
-
-            con.query(sqlInsert, function(err, result) {
-                if (err) throw err;
-                console.log(result);
-                res.send("Linhas inseridas: " + result.affectedRows);
-            });
-        } else {
-            res.send("Linhas alteradas: " + result.affectedRows);
-        }
-    });
-});
-
-// Delete
-server.del("/mesas/:tableNumber", function(req, res, next) {
-    var tableNumber = req.params.tableNumber;
-    console.log("Deletando mesa de número: %d", tableNumber);
-
-    var sql = "DELETE FROM digital_menu.mesa_empresa WHERE table_number = ?";
-    
-    con.query(sql, tableNumber, function (err, result, fields) {
-        if (err) throw err;
-        console.log(result);
-        res.send("Linhas deletadas" + result.affectedRows);
-    });
 });
 
 // -----------------------------------------------------------------------------------------------
