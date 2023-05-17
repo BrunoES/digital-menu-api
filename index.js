@@ -34,9 +34,31 @@ server.use(restify.plugins.queryParser());
 server.pre(cors.preflight); // Precisa usar restify 7.x.x + restify-cors-middleware para ser compatível com cors preflight.
 server.use(cors.actual);
 
+// Autenticacao
 server.pre((req, res, next) => {
     console.info(`${req.method} - ${req.url}`);
-    return next();
+    
+    if(req.url != "/login") {
+        var token = req.header('Authorization');
+        token = token.split(',')[0];
+        console.log(token);
+
+        var sql = `SELECT * FROM digital_menu.user_token WHERE token = '${token}'`;
+
+        con.query(sql, function(err, result) {
+            if (err) throw err;
+            console.log(result)
+            if(result.length > 0) {
+                var user = result[0].email;
+                console.log(`Usuario ${user} autenticado`);
+                return next();
+            } else {
+                return 'Acesso negado.';
+            }
+        });
+    } else {
+        return next();
+    }
 });
 
 server.opts("/menu-items", function(req, res, next) {
