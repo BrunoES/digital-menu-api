@@ -47,17 +47,42 @@ server.opts("/menu-items", function(req, res, next) {
 // Post
 server.post("/login", function(req, res, next) {
     var credentials = req.body;
+    var sql = `SELECT * FROM digital_menu.user_empresa WHERE email = '${credentials.user}' and password = '${credentials.password}'`;
 
     console.dir(credentials);
-    
-    var token = uuidv4();
-    
-    res.send({
-        access_token: token
+    console.log(sql);
+
+    con.query(sql, function (err, result, fields) {
+
+        if (err) throw err;
+        console.log(result);
+
+        if(result.length > 0) {
+            var token = uuidv4();
+            insereUserToken(credentials.user, token);
+            token = token + "," + result[0].id_company; // Formatando token no formato: token + id da empresa
+            res.send({
+                access_token: token
+            });
+        } else {
+            res.send(401, {
+                access_token: ""
+            });
+        }
     });
-    
 });
 
+
+function insereUserToken(email, token) {
+    var sql = `INSERT INTO digital_menu.user_token (email, token) VALUES ('${email}', '${token}')`
+
+    console.log(sql);
+
+    con.query(sql, function(err, result) {
+        if (err) throw err;
+        console.log(result);
+    });
+}
 
 // APIs - Menu Itens ----------------------------------------------------------------------------------
 
