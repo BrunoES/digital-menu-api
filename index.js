@@ -382,7 +382,7 @@ server.get("/pedidos/:initialDate/:finalDate", function (req, res, next) {
 
     //'2018-01-01 12:00:00' AND '2018-01-01 23:30:00'
 
-    var sqlPedidos = `SELECT * FROM digital_menu.pedidos WHERE date_hour BETWEEN '${initialDate}' AND '${finalDate}' ORDER BY date_hour DESC`;
+    var sqlPedidos = `SELECT * FROM digital_menu.v_historico_pedidos WHERE date_hour BETWEEN '${initialDate}' AND '${finalDate}'`;
     con.query(sqlPedidos, function (err, resultPedido, fields) {
         if (err) throw err;
         res.send(resultPedido);
