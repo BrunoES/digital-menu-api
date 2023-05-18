@@ -370,6 +370,25 @@ server.get("/pedidos/:id", function (req, res, next) {
     });
 });
 
+// Get By Period (Historico de pedidos)
+server.get("/pedidos/:initialDate/:finalDate", function (req, res, next) {
+    var initialDate = req.params.initialDate;
+    var finalDate = req.params.finalDate;
+    initialDate = initialDate + " 00:00:00";
+    finalDate = finalDate + " 23:59:50";
+
+    console.log(initialDate);
+    console.log(finalDate);
+
+    //'2018-01-01 12:00:00' AND '2018-01-01 23:30:00'
+
+    var sqlPedidos = `SELECT * FROM digital_menu.pedidos WHERE date_hour BETWEEN '${initialDate}' AND '${finalDate}' ORDER BY date_hour DESC`;
+    con.query(sqlPedidos, function (err, resultPedido, fields) {
+        if (err) throw err;
+        res.send(resultPedido);
+    });
+});
+
 // Post
 server.post("/pedidos", function(req, res, next) {
     var pedido = req.body;
