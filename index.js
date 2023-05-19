@@ -342,6 +342,17 @@ server.del("/mesas/:tableNumber", function(req, res, next) {
 
 // Get By Id
 server.get("/pedidos/:id", function (req, res, next) {
+    var id = req.params.id;
+
+    var sqlDetalheItems = "SELECT id_pedido, id_menu, name, price, quantity FROM digital_menu.v_menu_items_pedidos_detalhe WHERE id_pedido = ?";
+    con.query(sqlDetalheItems, id, function (err, resultItems, fields) {
+        if (err) throw err;
+        res.send(resultItems);
+    });
+});
+
+// Get By Id Customer
+server.get("/pedidos-by-customer-id/:id", function (req, res, next) {
     var customerId = req.params.id;
     var response = [];
     var countPedidosProcessados = 0;
