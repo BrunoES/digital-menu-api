@@ -40,26 +40,34 @@ server.use(cors.actual);
 
 // Filter - Autenticacao
 server.pre((req, res, next) => {
+    const SUCCESS = 200;
+    const ACCESS_DENIED = 401;
+    
     console.info(`${req.method} - ${req.url}`);
     
     // Se nao for /login, tenta autenticar.  
     if(req.url != "/login") {
         const token = getCleanTokenFromRequest(req);
-        console.log(token);
+        console.log("Validando token: " + token);
 
-        var sql = `SELECT * FROM digital_menu.user_token WHERE token = '${token}'`;
+        if(token  != "") {
+            var sql = `SELECT * FROM digital_menu.user_token WHERE token = '${token}'`;
 
-        con.query(sql, function(err, result) {
-            if (err) throw err;
-            console.log(result)
-            if(result.length > 0) {
-                var user = result[0].email;
-                console.log(`Usuario ${user} autenticado`);
-                return next();
-            } else {
-                return '401 Access denied.';
-            }
-        });
+            con.query(sql, function(err, result) {
+                if (err) throw err;
+                console.log(result)
+                if(result.length > 0) {
+                    var user = result[0].email;
+                    console.log(`Usuario ${user} autenticado`);
+                    return next();
+                } else {
+                    res.send(ACCESS_DENIED);
+                }
+            });
+        } else {
+            res.send(ACCESS_DENIED);
+        }
+        
     } else {
         return next();
     }
