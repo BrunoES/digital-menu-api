@@ -32,6 +32,11 @@ const pathQRCodes = `.${sep}media${sep}qrcodes`;
 
 const BASE_URL_QRCODE_MESA = 'https://www.cardapil.com.br';
 
+var htmlContentUserActivated = '';
+
+const BASE_URL_SERVER = 'http://localhost:8080';
+const REDIRECT_USER_ACTIVATED = './html/user-activated.html';
+
 server.use(restify.plugins.bodyParser({ mapParams: true }));
 server.use(restify.plugins.acceptParser(server.acceptable));
 server.use(restify.plugins.queryParser());
@@ -46,7 +51,7 @@ server.pre((req, res, next) => {
     console.info(`${req.method} - ${req.url}`);
     
     // Se nao for /login, tenta autenticar.  
-    if((req.url != "/login") && (req.url != "/signup")) {
+    if((req.url != "/login") && (req.url != "/signup") && (req.url != "/signup") && (!req.url.includes("/activate"))) {
         const token = getCleanTokenFromRequest(req);
         console.log("Validando token: " + token);
 
@@ -86,7 +91,7 @@ server.opts("/menu-items", function(req, res, next) {
 // Post
 server.post("/login", function(req, res, next) {
     var credentials = req.body;
-    var sql = `SELECT * FROM digital_menu.user_empresa WHERE email = '${credentials.user}' and password = '${credentials.password}'`;
+    var sql = `SELECT * FROM digital_menu.user_empresa WHERE active = 1 and blocked = 0 and (email = '${credentials.user}' and password = '${credentials.password}')`;
 
     console.dir(credentials);
     console.log(sql);
@@ -152,13 +157,35 @@ server.post("/signup", function(req, res, next) {
     con.query(sqlCompany, function(err, resultCompany) {
         if (err) throw err;
         console.log(resultCompany);
-        var sqlUser = `INSERT INTO digital_menu.user_empresa (email, password, id_company, blocked, active) VALUES ('${company.user}', '${company.password}', '${resultCompany.insertId}', '0', '1')`;
+        // Usuario comeca como inativo, para ser ativado via API de ativacao.
+        var sqlUser = `INSERT INTO digital_menu.user_empresa (email, password, id_company, blocked, active) VALUES ('${company.user}', '${company.password}', '${resultCompany.insertId}', '0', '0')`;
         
         con.query(sqlUser, function(err, resultUser) {
             if (err) throw err;
             console.log(resultUser);
             res.send("Linhas inseridas: " + resultUser.affectedRows);
         });
+    });
+});
+
+// Get Activate Accunt
+server.get("/activate/:user", function(req, res, next) {
+    const user = req.params.user;
+
+    var sql = `UPDATE digital_menu.user_empresa 
+                  SET active    = '1'
+               WHERE email = '${user}'`
+
+    con.query(sql, function(err, result) {
+        if (err) throw err;
+        console.log(result);
+
+        if(result.affectedRows == 0) {      
+
+        } else {
+            // Monta pagina de login, lendo pagina de resposta do disco, e coloca e-mail do usuario no html.
+            res.end(htmlContentUserActivated.replace("<USER>", user));
+        }
     });
 });
 
@@ -462,6 +489,14 @@ con.connect(function(err) {
     if(err) throw err;
     console.log("Connected!");
 });
+
+fs.readFile('./html/user-activated.html', 'utf8', (err, data) => {
+    if (err) {
+      console.error(err);
+      return;
+    }
+    htmlContentUserActivated = data;
+  });
 
 console.log("Running");
 
