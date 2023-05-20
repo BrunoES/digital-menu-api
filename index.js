@@ -46,7 +46,7 @@ server.pre((req, res, next) => {
     console.info(`${req.method} - ${req.url}`);
     
     // Se nao for /login, tenta autenticar.  
-    if(req.url != "/login") {
+    if((req.url != "/login") && (req.url != "/signup")) {
         const token = getCleanTokenFromRequest(req);
         console.log("Validando token: " + token);
 
@@ -137,6 +137,30 @@ function getCompanyIdFromRequest(req) {
     const token = req.header(TOKEN_NAME);
     return token.split(',')[1];
 }
+
+// APIs - Empresa ----------------------------------------------------------------------------------
+// Post
+server.post("/signup", function(req, res, next) {
+    const company = req.body;
+
+    console.log(company);
+
+    var sqlCompany = `INSERT INTO digital_menu.company (name, active) VALUES ('${company.name}', '1')`;
+
+    console.log(sqlCompany);
+
+    con.query(sqlCompany, function(err, resultCompany) {
+        if (err) throw err;
+        console.log(resultCompany);
+        var sqlUser = `INSERT INTO digital_menu.user_empresa (email, password, id_company, blocked, active) VALUES ('${company.user}', '${company.password}', '${resultCompany.insertId}', '0', '1')`;
+        
+        con.query(sqlUser, function(err, resultUser) {
+            if (err) throw err;
+            console.log(resultUser);
+            res.send("Linhas inseridas: " + resultUser.affectedRows);
+        });
+    });
+});
 
 // APIs - Menu Itens ----------------------------------------------------------------------------------
 
