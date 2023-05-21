@@ -1,6 +1,6 @@
 CREATE 
     ALGORITHM = UNDEFINED 
-    DEFINER = `root`@`%` 
+    DEFINER = `root`@`localhost` 
     SQL SECURITY DEFINER
 VIEW `digital_menu`.`v_historico_pedidos` AS
     SELECT 

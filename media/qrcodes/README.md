@@ -1,0 +1,1 @@
+# table's QRCodes dir

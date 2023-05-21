@@ -58,13 +58,17 @@ CREATE TABLE `digital_menu`.`mesa_empresa` (
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8
 COLLATE = utf8_unicode_ci;
+ALTER TABLE `digital_menu`.`mesa_empresa` 
+ADD COLUMN `qrcode_url` VARCHAR(255) NULL AFTER `complement`;
 
 CREATE TABLE `user_token` (
   `email` varchar(255) NOT NULL,
   `date_hour` datetime DEFAULT CURRENT_TIMESTAMP,
   `token` varchar(36) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   PRIMARY KEY (`email`,`token`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+) ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8
+COLLATE = utf8_unicode_ci;
 
 SET character_set_client = utf8;
 SET character_set_connection = utf8;

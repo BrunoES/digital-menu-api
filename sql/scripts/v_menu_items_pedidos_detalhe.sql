@@ -2,7 +2,7 @@ CREATE
     ALGORITHM = UNDEFINED 
     DEFINER = `root`@`localhost` 
     SQL SECURITY DEFINER
-VIEW `v_menu_items_pedidos_detalhe` AS
+VIEW `digital_menu`.`v_menu_items_pedidos_detalhe` AS
     SELECT 
         `pedido`.`id` AS `id_pedido`,
         `pedido`.`date_hour` AS `date_hour`,

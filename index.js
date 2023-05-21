@@ -37,7 +37,7 @@ const TOKEN_NAME = 'Authorization';
 const customerId = 1;
 const sep = path.sep;
 const pathImages = `.${sep}${sep}media${sep}${sep}imgs`;
-const pathQRCodes = `.${sep}media${sep}qrcodes`;
+const pathQRCodes = `.${sep}${sep}media${sep}${sep}qrcodes`;
 
 const BASE_URL_QRCODE_MESA = 'https://www.cardapil.com.br';
 
@@ -256,7 +256,10 @@ server.get("/redirect-change-password/:user", function(req, res, next) {
 
         } else {
             // Validar se em vez de fazer isso, da pra redirecionar direto para a pagina HTML
-            res.end(htmlContentChangePassword.replace("<TOKEN_CHANGE_PASSWORD>", uuidTokenChangePassword));
+            //res.end(htmlContentChangePassword.replace("<TOKEN_CHANGE_PASSWORD>", uuidTokenChangePassword));
+            res.header('Location', 'https://www.google.com');
+            res.send();
+            //res.redirect('', next)
         }
     });
 });
@@ -490,7 +493,7 @@ server.patch("/mesas", function(req, res, next) {
 
             const qrCodeName = getQRCodeName(companyId);
             const qrCodePathName = getQRCodePathName(qrCodeName);
-            const qrCodeURl = `${BASE_URL_QRCODE_MESA}/${companyId}/${mesa.tableNumber}`;
+            const qrCodeURl = `${BASE_URL_QRCODE_MESA}${sep}${companyId}${sep}${mesa.tableNumber}`;
 
             QRCode.toFile(qrCodePathName, qrCodeURl, {
                 errorCorrectionLevel: 'H'
@@ -619,23 +622,7 @@ con.connect(function(err) {
     console.log("Connected!");
 });
 
-// Reading static html fails returned in API e-mails
-fs.readFile('./html/user-activated.html', 'utf8', (err, data) => {
-    if (err) {
-        console.error(err);
-        return;
-    }
-    htmlContentUserActivated = data;
-});
-fs.readFile('/home/bruno/Estudo/web-js/digital-menu-backoffice/html/change-password.html', 'utf8', (err, data) => {
-    if (err) {
-        console.error(err);
-        return;
-    }
-    htmlContentChangePassword = data;
-});
 
-console.log("Running");
 
 // --
 
@@ -697,5 +684,5 @@ function getQRCodeName(companyId) {
 }
 
 function getQRCodePathName(qrCodeName) {
-    return `${pathQRCodes}${sep}${qrCodeName}`;
+    return `${pathQRCodes}${sep}${sep}${qrCodeName}`;
 }
