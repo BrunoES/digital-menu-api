@@ -10,6 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "mysql": "^2.18.1",
+    "nodemailer": "^6.9.2",
     "qrcode": "^1.5.3",
     "restify": "^11.1.0",
     "restify-cors-middleware2": "^2.2.1",

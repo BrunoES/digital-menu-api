@@ -6,6 +6,7 @@ const fs = require("fs");
 const path = require("path");
 const { v4: uuidv4 } = require('uuid');
 const QRCode = require('qrcode');
+const nodemailer = require('nodemailer');
 
 const cors = corsMiddleware({
   origins: ["*"],
@@ -24,6 +25,14 @@ const server = restify.createServer({
   version: "1.0.0"
 });
 
+const mailTransporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: 'suporte.cardapil@gmail.com',
+        pass: 'pdktiohicekupata'
+    }
+});
+
 const TOKEN_NAME = 'Authorization';
 const customerId = 1;
 const sep = path.sep;
@@ -33,6 +42,7 @@ const pathQRCodes = `.${sep}media${sep}qrcodes`;
 const BASE_URL_QRCODE_MESA = 'https://www.cardapil.com.br';
 
 var htmlContentUserActivated = '';
+var htmlContentChangePassword = '';
 
 const BASE_URL_SERVER = 'http://localhost:8080';
 const REDIRECT_USER_ACTIVATED = './html/user-activated.html';
@@ -43,6 +53,16 @@ server.use(restify.plugins.queryParser());
 server.pre(cors.preflight); // Precisa usar restify 7.x.x + restify-cors-middleware para ser compatível com cors preflight.
 server.use(cors.actual);
 
+function isAuthUrl(url) {
+    return ((url != "/login") &&
+            (url != "/signup") &&
+            (url != "/signup") &&
+            (!url.includes("/activate"))&&
+            url != "/request-change-password" &&
+            (!url.includes("/redirect-change-password")) &&
+            (!url.includes("/change-password")));
+}
+
 // Filter - Autenticacao
 server.pre((req, res, next) => {
     const SUCCESS = 200;
@@ -51,7 +71,7 @@ server.pre((req, res, next) => {
     console.info(`${req.method} - ${req.url}`);
     
     // Se nao for /login, tenta autenticar.  
-    if((req.url != "/login") && (req.url != "/signup") && (req.url != "/signup") && (!req.url.includes("/activate"))) {
+    if(isAuthUrl(req.url)) {
         const token = getCleanTokenFromRequest(req);
         console.log("Validando token: " + token);
 
@@ -105,6 +125,7 @@ server.post("/login", function(req, res, next) {
             var token = uuidv4();
             insereUserToken(credentials.user, token);
             token = token + "," + result[0].id_company; // Formatando token no formato: token + id da empresa
+
             res.send(201, {
                 access_token: token
             });
@@ -163,10 +184,118 @@ server.post("/signup", function(req, res, next) {
         con.query(sqlUser, function(err, resultUser) {
             if (err) throw err;
             console.log(resultUser);
+
+            sendActivateMail(company.name, company.user);
+
             res.send("Linhas inseridas: " + resultUser.affectedRows);
         });
     });
 });
+
+server.post("/change-password", function(req, res, next) {
+    const newPassword = req.body.password;
+    const uuidTokenChangePassword = req.body.token;
+
+    if(uuidTokenChangePassword != '') {
+        var sql = `UPDATE digital_menu.user_empresa 
+                      SET temp_token_change_pass = '',
+                          password = '${newPassword}'
+                    WHERE active = 1
+                      and blocked = 0
+                      and temp_token_change_pass = '${uuidTokenChangePassword}'
+                      and temp_token_change_pass is not null`;
+
+        con.query(sql, function(err, result) {
+            if (err) throw err;
+            console.log(result);
+
+            if(result.affectedRows == 0) {      
+                res.send(404, "");
+            } else {
+                res.send(200, "");
+            }
+        });
+    }
+});
+
+server.post("/request-change-password", function(req, res, next) {
+    const user = req.body.user;
+
+    var sql = `SELECT * FROM digital_menu.user_empresa WHERE active = 1 and blocked = 0 and email = '${user}'`;
+
+    console.log(sql);
+
+    con.query(sql, function (err, result, fields) {
+
+        if (err) throw err;
+        console.log(result);
+
+        if(result.length > 0) {
+            sendChangePasswordeMail(user);
+            res.send(200, "");
+        } else {
+            res.send(404, "");
+        }
+    });
+});
+
+// Get Change password through e-mail
+server.get("/redirect-change-password/:user", function(req, res, next) {
+    const user = req.params.user;
+    const uuidTokenChangePassword = uuidv4();
+
+    var sql = `UPDATE digital_menu.user_empresa 
+                  SET temp_token_change_pass = '${uuidTokenChangePassword}'
+               WHERE email = '${user}'`
+
+    con.query(sql, function(err, result) {
+        if (err) throw err;
+        console.log(result);
+
+        if(result.affectedRows == 0) {      
+
+        } else {
+            // Validar se em vez de fazer isso, da pra redirecionar direto para a pagina HTML
+            res.end(htmlContentChangePassword.replace("<TOKEN_CHANGE_PASSWORD>", uuidTokenChangePassword));
+        }
+    });
+});
+
+function sendActivateMail(name, email) {
+    var mailOptions = {
+        from: 'suporte.cardapil@gmail.com',
+        to: email,
+        subject: 'Cardapil - Ative sua conta!',
+        html: `<html><body>Olá ${name}, clique <a href='${BASE_URL_SERVER}/activate/${email}'>aqui</a> para ativar sua conta.
+        <BR><BR> Tenha um ótimo uso da plataforma!</body></html>`        
+    };
+
+    mailTransporter.sendMail(mailOptions, function(error, info){
+        if (error) {
+            console.log(error);
+        } else {
+            console.log('Email sent: ' + info.response);
+        }
+    });
+}
+
+function sendChangePasswordeMail(email) {
+    var mailOptions = {
+        from: 'suporte.cardapil@gmail.com',
+        to: email,
+        subject: 'Cardapil - Redefinição de senha',
+        html: `<html><body>Olá, clique <a href='${BASE_URL_SERVER}/redirect-change-password/${email}'>aqui</a> para redefinir sua senha.
+        <BR><BR> Tenha um ótimo uso da plataforma!</body></html>`        
+    };
+
+    mailTransporter.sendMail(mailOptions, function(error, info){
+        if (error) {
+            console.log(error);
+        } else {
+            console.log('Email sent: ' + info.response);
+        }
+    });
+}
 
 // Get Activate Accunt
 server.get("/activate/:user", function(req, res, next) {
@@ -490,13 +619,21 @@ con.connect(function(err) {
     console.log("Connected!");
 });
 
+// Reading static html fails returned in API e-mails
 fs.readFile('./html/user-activated.html', 'utf8', (err, data) => {
     if (err) {
-      console.error(err);
-      return;
+        console.error(err);
+        return;
     }
     htmlContentUserActivated = data;
-  });
+});
+fs.readFile('/home/bruno/Estudo/web-js/digital-menu-backoffice/html/change-password.html', 'utf8', (err, data) => {
+    if (err) {
+        console.error(err);
+        return;
+    }
+    htmlContentChangePassword = data;
+});
 
 console.log("Running");
 

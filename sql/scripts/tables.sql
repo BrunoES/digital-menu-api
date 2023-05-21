@@ -39,15 +39,16 @@ ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8
 COLLATE = utf8_unicode_ci;
 
-CREATE TABLE `digital_menu`.`user_empresa` (
+CREATE TABLE `user_empresa` (
   `email` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
   `password` varchar(12) COLLATE utf8_unicode_ci NOT NULL,
-  `id_company` int NOT NULL,
+  `id_company` int(11) NOT NULL,
   `blocked` tinyint(1) DEFAULT '0',
   `active` tinyint(1) DEFAULT '0',
+  `temp_token_change_pass` varchar(36) COLLATE utf8_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`email`),
   UNIQUE KEY `email_UNIQUE` (`email`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 CREATE TABLE `digital_menu`.`mesa_empresa` (
   `table_number` INT NOT NULL,
@@ -63,7 +64,7 @@ CREATE TABLE `user_token` (
   `date_hour` datetime DEFAULT CURRENT_TIMESTAMP,
   `token` varchar(36) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   PRIMARY KEY (`email`,`token`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 
 SET character_set_client = utf8;
 SET character_set_connection = utf8;
