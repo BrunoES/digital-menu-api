@@ -45,7 +45,10 @@ var htmlContentUserActivated = '';
 var htmlContentChangePassword = '';
 
 const BASE_URL_SERVER = 'http://localhost:8080';
-const REDIRECT_USER_ACTIVATED = './html/user-activated.html';
+const BASE_URL_FRONTEND = 'http://localhost:9091';
+
+const REDIRECT_USER_ACTIVATED = `${BASE_URL_FRONTEND}/a`;
+const REDIRECT_CHANGE_PASSWORD = `${BASE_URL_FRONTEND}/change-password`;
 
 server.use(restify.plugins.bodyParser({ mapParams: true }));
 server.use(restify.plugins.acceptParser(server.acceptable));
@@ -196,6 +199,8 @@ server.post("/change-password", function(req, res, next) {
     const newPassword = req.body.password;
     const uuidTokenChangePassword = req.body.token;
 
+    console.log("Token: " + uuidTokenChangePassword);
+
     if(uuidTokenChangePassword != '') {
         var sql = `UPDATE digital_menu.user_empresa 
                       SET temp_token_change_pass = '',
@@ -257,9 +262,9 @@ server.get("/redirect-change-password/:user", function(req, res, next) {
         } else {
             // Validar se em vez de fazer isso, da pra redirecionar direto para a pagina HTML
             //res.end(htmlContentChangePassword.replace("<TOKEN_CHANGE_PASSWORD>", uuidTokenChangePassword));
-            res.header('Location', 'https://www.google.com');
-            res.send();
-            //res.redirect('', next)
+            //res.header('Location', 'https://www.google.com');
+            //res.send();
+            res.redirect(`${REDIRECT_CHANGE_PASSWORD}?uuidTokenChangePassword=${uuidTokenChangePassword}`, next)
         }
     });
 });
