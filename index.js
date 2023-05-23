@@ -9,8 +9,8 @@ const QRCode = require('qrcode');
 const nodemailer = require('nodemailer');
 
 const cors = corsMiddleware({
-  origins: ["*"],
-  allowHeaders: ["*"],
+  origins: ["http://localhost:9091", "*"],
+  allowHeaders: ["Access-Control-Allow-Origin", "*"],
   exposeHeaders: ["*"]
 });
 
@@ -41,13 +41,10 @@ const pathQRCodes = `.${sep}${sep}media${sep}${sep}qrcodes`;
 
 const BASE_URL_QRCODE_MESA = 'https://www.cardapil.com.br';
 
-var htmlContentUserActivated = '';
-var htmlContentChangePassword = '';
-
 const BASE_URL_SERVER = 'http://localhost:8080';
 const BASE_URL_FRONTEND = 'http://localhost:9091';
 
-const REDIRECT_USER_ACTIVATED = `${BASE_URL_FRONTEND}/a`;
+const REDIRECT_USER_ACTIVATED = `${BASE_URL_FRONTEND}/user-activated`;
 const REDIRECT_CHANGE_PASSWORD = `${BASE_URL_FRONTEND}/change-password`;
 
 server.use(restify.plugins.bodyParser({ mapParams: true }));
@@ -169,6 +166,68 @@ function getCompanyIdFromRequest(req) {
 
 // APIs - Empresa ----------------------------------------------------------------------------------
 // Post
+
+// Get By Id
+// Retorna dados da empresa logada.
+server.get("/company", function (req, res, next) {
+    const companyId = getCompanyIdFromRequest(req);
+
+    var sql = "SELECT * FROM digital_menu.v_company_user WHERE id_company = ?";
+    con.query(sql, companyId, function (err, result, fields) {
+        if (err) throw err;
+        res.send(result);
+    });
+});
+
+server.put("/company", function (req, res, next) {
+    const companyId = getCompanyIdFromRequest(req);
+    var company = req.body;
+
+    console.log(company);
+
+    var name = company.name;
+    var email = company.user;
+    var password = company.password;
+
+    var sql = "SELECT * FROM digital_menu.v_company_user WHERE id_company = ?";
+    con.query(sql, companyId, function (err, result, fields) {
+        if (err) throw err;
+        var companyData = result[0];
+        var originalName = companyData.company_name;
+        var originalEmail = companyData.user_email;
+        var originalPassword = companyData.user_password;
+
+        if(name == "") name = originalName;
+        if(email == "") email = originalEmail;
+        if(password == "") password = originalPassword;
+
+        // Atualiza dados da empresa.
+        var sqlUpdateCompany = `UPDATE digital_menu.company 
+                                   SET name = '${name}'
+                                 WHERE id   = '${companyId}';`;
+
+        // Atualiza dados do usuaio, e inativa o mesmo para confirmação via link enviado no e-mail.
+        var sqlUpdateUser = `UPDATE digital_menu.user_empresa 
+                                SET email    = '${email}',
+                                    password = '${password}',
+                                    active   = '0'
+                              WHERE email    = '${originalEmail}';`;
+        
+        con.query(sqlUpdateCompany, function(err, resultCompany) {
+            if (err) throw err;
+            console.log(resultCompany);
+
+            con.query(sqlUpdateUser, function(err, resultUser) {
+                if (err) throw err;
+                console.log(resultUser);
+
+                sendChangeAccountDataMail(originalName, originalEmail);
+                res.send(200, "");
+            });
+        });
+    });
+});
+
 server.post("/signup", function(req, res, next) {
     const company = req.body;
 
@@ -269,6 +328,26 @@ server.get("/redirect-change-password/:user", function(req, res, next) {
     });
 });
 
+function sendChangeAccountDataMail(name, email) {
+    var mailOptions = {
+        from: 'suporte.cardapil@gmail.com',
+        to: email,
+        subject: 'Cardapil - Alteração de dados da sua conta',
+        html: `<html><body>Olá ${name}, houveram alterações nos dados cadastrais de sua conta, dados como Nome da sua empresa, e-mail, ou senha de acesso foram alterados.<br>
+        Se você não reconhece esta alteração de dados entre em contato conosco, caso tenha sido você mesmo, apenas clique <a href='${BASE_URL_SERVER}/activate/${email}'>aqui</a> <br>
+        para ativar sua conta e continuar utilizando nossa plataforma.
+        <BR><BR> Tenha um ótimo uso da plataforma!</body></html>`        
+    };
+
+    mailTransporter.sendMail(mailOptions, function(error, info){
+        if (error) {
+            console.log(error);
+        } else {
+            console.log('Email sent: ' + info.response);
+        }
+    });
+}
+
 function sendActivateMail(name, email) {
     var mailOptions = {
         from: 'suporte.cardapil@gmail.com',
@@ -321,7 +400,7 @@ server.get("/activate/:user", function(req, res, next) {
 
         } else {
             // Monta pagina de login, lendo pagina de resposta do disco, e coloca e-mail do usuario no html.
-            res.end(htmlContentUserActivated.replace("<USER>", user));
+            res.redirect(`${REDIRECT_USER_ACTIVATED}?user=${user}`, next)
         }
     });
 });
@@ -540,7 +619,7 @@ server.del("/mesas/:tableNumber", function(req, res, next) {
 server.get("/pedidos/:id", function (req, res, next) {
     var id = req.params.id;
 
-    var sqlDetalheItems = "SELECT id_pedido, id_menu, name, price, quantity FROM digital_menu.v_menu_items_pedidos_detalhe WHERE id_pedido = ?";
+    var sqlDetalheItems = "SELECT * FROM digital_menu.v_menu_items_pedidos_detalhe WHERE id_pedido = ?";
     con.query(sqlDetalheItems, id, function (err, resultItems, fields) {
         if (err) throw err;
         res.send(resultItems);
@@ -589,6 +668,8 @@ server.get("/pedidos/:initialDate/:finalDate", function (req, res, next) {
 
     //'2018-01-01 12:00:00' AND '2018-01-01 23:30:00'
 
+    console.log(`SELECT * FROM digital_menu.v_historico_pedidos WHERE date_hour BETWEEN '${initialDate}' AND '${finalDate}'`);
+
     var sqlPedidos = `SELECT * FROM digital_menu.v_historico_pedidos WHERE date_hour BETWEEN '${initialDate}' AND '${finalDate}'`;
     con.query(sqlPedidos, function (err, resultPedido, fields) {
         if (err) throw err;
@@ -626,8 +707,6 @@ con.connect(function(err) {
     if(err) throw err;
     console.log("Connected!");
 });
-
-
 
 // --
 

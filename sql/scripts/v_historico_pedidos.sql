@@ -4,14 +4,15 @@ CREATE
     SQL SECURITY DEFINER
 VIEW `digital_menu`.`v_historico_pedidos` AS
     SELECT 
-        `digital_menu`.`pedidos`.`id` AS `id_pedido`,
-        DATE_FORMAT(`digital_menu`.`pedidos`.`date_hour`,
-                '%d/%m/%Y %H:%i:%s') AS `date_hour`,
-        `digital_menu`.`pedidos`.`total` AS `total`,
-        `digital_menu`.`clientes`.`customer_name` AS `customer_name`
+        `pedidos`.`id` AS `id_pedido`,
+        `pedidos`.`date_hour` AS `date_hour`,
+        DATE_FORMAT(`pedidos`.`date_hour`,
+                '%d/%m/%Y %H:%i:%s') AS `date_hour_formatted`,
+        `pedidos`.`total` AS `total`,
+        `clientes`.`customer_name` AS `customer_name`
     FROM
-        (`digital_menu`.`clientes`
-        JOIN `digital_menu`.`pedidos`)
+        (`clientes`
+        JOIN `pedidos`)
     WHERE
-        (`digital_menu`.`pedidos`.`id_customer` = `digital_menu`.`clientes`.`id`)
-    ORDER BY `digital_menu`.`pedidos`.`date_hour` DESC
+        (`pedidos`.`id_customer` = `clientes`.`id`)
+    ORDER BY `pedidos`.`date_hour` DESC

@@ -10,7 +10,8 @@ VIEW `digital_menu`.`v_menu_items_pedidos_detalhe` AS
         `menu`.`id` AS `id_menu`,
         `menu`.`name` AS `name`,
         `menu`.`price` AS `price`,
-        `items`.`quantity` AS `quantity`
+        `items`.`quantity` AS `quantity`,
+        `pedido`.`obs` AS `obs`
     FROM
         ((`menu_items_pedidos` `items`
         JOIN `menu_items` `menu`)
