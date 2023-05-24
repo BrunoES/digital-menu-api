@@ -24,11 +24,12 @@ CREATE TABLE `menu_items_pedidos` (
 CREATE TABLE `pedidos` (
   `id` int NOT NULL AUTO_INCREMENT,
   `id_customer` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+  `id_company` int NOT NULL,
   `total` float NOT NULL,
   `obs` varchar(100) COLLATE utf8_unicode_ci DEFAULT NULL,
   `date_hour` datetime DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=72 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci
 
 CREATE TABLE `digital_menu`.`company` (
   `id` INT NOT NULL AUTO_INCREMENT,

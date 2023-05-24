@@ -656,8 +656,9 @@ server.get("/pedidos-by-customer-id/:id", function (req, res, next) {
     });
 });
 
-// Get By Period (Historico de pedidos)
-server.get("/pedidos/:initialDate/:finalDate", function (req, res, next) {
+// Get Full checkoutBy Period (Historico de pedidos)
+server.get("/pedidos-full/:initialDate/:finalDate", function (req, res, next) {
+    const companyId = getCompanyIdFromRequest(req);
     var initialDate = req.params.initialDate;
     var finalDate = req.params.finalDate;
     initialDate = initialDate + " 00:00:00";
@@ -666,11 +667,45 @@ server.get("/pedidos/:initialDate/:finalDate", function (req, res, next) {
     console.log(initialDate);
     console.log(finalDate);
 
-    //'2018-01-01 12:00:00' AND '2018-01-01 23:30:00'
+    var response = [];
+    var countPedidosProcessados = 0;
+    var qtdPedidos = 0;
 
-    console.log(`SELECT * FROM digital_menu.v_historico_pedidos WHERE date_hour BETWEEN '${initialDate}' AND '${finalDate}'`);
+    var sqlPedidos = "SELECT * FROM digital_menu.v_historico_pedidos WHERE id_company = ? ORDER BY date_hour DESC";
+    con.query(sqlPedidos, companyId, function (err, resultPedido, fields) {
+        if (err) throw err;
+        qtdPedidos = resultPedido.length;
+        resultPedido.forEach(pedido => {
+            var sqlDetalheItems = "SELECT * FROM digital_menu.v_menu_items_pedidos_detalhe WHERE id_pedido = ?";
+            con.query(sqlDetalheItems, pedido.id_pedido, function (err, resultItems, fields) {
+                if (err) throw err;
 
-    var sqlPedidos = `SELECT * FROM digital_menu.v_historico_pedidos WHERE date_hour BETWEEN '${initialDate}' AND '${finalDate}'`;
+                response.push({
+                    pedido: pedido,
+                    detalheItems: resultItems
+                });
+                countPedidosProcessados++;
+
+                if(countPedidosProcessados === qtdPedidos) {
+                    res.send(response);
+                }
+            });    
+        });
+    });
+});
+
+// Get By Period (Historico de pedidos)
+server.get("/pedidos/:initialDate/:finalDate", function (req, res, next) {
+    const companyId = getCompanyIdFromRequest(req);
+    var initialDate = req.params.initialDate;
+    var finalDate = req.params.finalDate;
+    initialDate = initialDate + " 00:00:00";
+    finalDate = finalDate + " 23:59:50";
+
+    console.log(initialDate);
+    console.log(finalDate);
+
+    var sqlPedidos = `SELECT * FROM digital_menu.v_historico_pedidos WHERE date_hour BETWEEN '${initialDate}' AND '${finalDate}' AND id_company = ${companyId}`;
     con.query(sqlPedidos, function (err, resultPedido, fields) {
         if (err) throw err;
         res.send(resultPedido);
