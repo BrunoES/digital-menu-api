@@ -111,7 +111,7 @@ server.opts("/menu-items", function(req, res, next) {
 // Post
 server.post("/login", function(req, res, next) {
     var credentials = req.body;
-    var sql = `SELECT * FROM digital_menu.user_empresa WHERE active = 1 and blocked = 0 and (email = '${credentials.user}' and password = '${credentials.password}')`;
+    var sql = `SELECT * FROM digital_menu.v_company_user WHERE user_active = 1 and user_blocked = 0 and (user_email = '${credentials.user}' and user_password = '${credentials.password}')`;
 
     console.dir(credentials);
     console.log(sql);
@@ -124,7 +124,7 @@ server.post("/login", function(req, res, next) {
         if(result.length > 0) {
             var token = uuidv4();
             insereUserToken(credentials.user, token);
-            token = token + "," + result[0].id_company; // Formatando token no formato: token + id da empresa
+            token = token + "," + result[0].id_company + "," + result[0].company_name; // Formatando token no formato: token + id da empresa + nome da empresa.
 
             res.send(201, {
                 access_token: token
