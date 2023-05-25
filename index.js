@@ -657,22 +657,22 @@ server.get("/pedidos-by-customer-id/:id", function (req, res, next) {
 });
 
 // Get Full checkoutBy Period (Historico de pedidos)
-server.get("/pedidos-full/:initialDate/:finalDate", function (req, res, next) {
+server.get("/pedidos-full/:initialDateHour/:finalDateHour", function (req, res, next) {
     const companyId = getCompanyIdFromRequest(req);
-    var initialDate = req.params.initialDate;
-    var finalDate = req.params.finalDate;
-    initialDate = initialDate + " 00:00:00";
-    finalDate = finalDate + " 23:59:50";
+    var initialDateHour = req.params.initialDateHour.replace("T", " ");
+    var finalDateHour = req.params.finalDateHour.replace("T", " ");
 
-    console.log(initialDate);
-    console.log(finalDate);
+    console.log(initialDateHour);
+    console.log(finalDateHour);
 
     var response = [];
     var countPedidosProcessados = 0;
     var qtdPedidos = 0;
 
-    var sqlPedidos = "SELECT * FROM digital_menu.v_historico_pedidos WHERE id_company = ? ORDER BY date_hour DESC";
-    con.query(sqlPedidos, companyId, function (err, resultPedido, fields) {
+    console.log(`SELECT * FROM digital_menu.v_historico_pedidos WHERE date_hour BETWEEN '${initialDateHour}' AND '${finalDateHour}' AND id_company = ${companyId} ORDER BY date_hour DESC`);
+
+    var sqlPedidos = `SELECT * FROM digital_menu.v_historico_pedidos WHERE date_hour BETWEEN '${initialDateHour}' AND '${finalDateHour}' AND id_company = ${companyId} ORDER BY date_hour DESC`;
+    con.query(sqlPedidos, function (err, resultPedido, fields) {
         if (err) throw err;
         qtdPedidos = resultPedido.length;
         resultPedido.forEach(pedido => {
