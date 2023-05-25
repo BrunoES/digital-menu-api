@@ -30,6 +30,10 @@ CREATE TABLE `pedidos` (
   `date_hour` datetime DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=72 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci
+ALTER TABLE `digital_menu`.`pedidos` 
+ADD COLUMN `checked` TINYINT NULL AFTER `date_hour`;
+ALTER TABLE `digital_menu`.`pedidos` 
+CHANGE COLUMN `checked` `checked` TINYINT NULL DEFAULT 0 ;
 
 CREATE TABLE `digital_menu`.`company` (
   `id` INT NOT NULL AUTO_INCREMENT,

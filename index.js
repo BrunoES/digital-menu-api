@@ -732,6 +732,27 @@ server.post("/pedidos", function(req, res, next) {
     res.send("Linhas inseridas com sucesso.");
 });
 
+
+// Post
+server.post("/pedidos/check", function(req, res, next) {
+    var pedidoId = req.body.pedidoId;
+
+    var sql = `UPDATE digital_menu.pedidos 
+                  SET checked = '1'
+                WHERE id = '${pedidoId}'`
+
+    con.query(sql, function(err, result) {
+        if (err) throw err;
+        console.log(result);
+
+        if(result.affectedRows == 0) {      
+            res.send(201);
+        } else {
+            res.send(500);
+        }
+    });
+});
+
 // -----------------------------------------------------------------------------------------------
 
 server.listen(8080, function() {
