@@ -753,6 +753,22 @@ server.post("/pedidos/check", function(req, res, next) {
     });
 });
 
+// Post
+server.get("/pedidos/count", function(req, res, next) {
+    const companyId = getCompanyIdFromRequest(req);
+
+    var sql = `SELECT count(*) as count FROM digital_menu.pedidos WHERE id_company = ?`;
+    console.log(sql);
+    con.query(sql, companyId, function (err, result, fields) {
+        if (err) throw err;
+        if(result.length > 0) {      
+            res.send( { count : result[0].count } ) ;
+        } else {
+            res.send( { count : 0 } );
+        }
+    });
+});
+
 // -----------------------------------------------------------------------------------------------
 
 server.listen(8080, function() {
