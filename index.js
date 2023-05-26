@@ -179,6 +179,33 @@ server.get("/company", function (req, res, next) {
     });
 });
 
+// Salva logo da empresa
+server.post("/company/logo", function (req, res, next) {
+    const companyId = getCompanyIdFromRequest(req);
+    var image = req.body.image;
+    var base64Img = image.base64.split(';base64,').pop();
+    var imgExtension = image.type.replace('image/', '');
+    var imgName = getImageName(companyId, "logo", imgExtension);
+    var imgPathName = getImagePathName(imgName);
+
+    console.log(base64Img);
+    console.log(imgPathName);
+
+    fs.writeFileSync(imgPathName, base64Img, 'base64');
+
+    var sqlUpdate = `UPDATE digital_menu.company 
+                        SET logo_url = '${imgPathName}'
+                      WHERE id = ${companyId}`;
+
+    console.log(sqlUpdate);
+
+    con.query(sqlUpdate, function(err, result) {
+        if (err) throw err;
+        console.log(result);
+        res.send("Linhas alteradas: " + result.affectedRows);
+    });
+});
+
 server.put("/company", function (req, res, next) {
     const companyId = getCompanyIdFromRequest(req);
     var company = req.body;
@@ -445,7 +472,7 @@ server.post("/menu-items", function(req, res, next) {
     var image = menuItem.image;
     var base64Img = image.base64.split(';base64,').pop();
     var imgExtension = image.type.replace('image/', '');
-    var imgName = getImageName(companyId, imgExtension);
+    var imgName = getImageName(companyId, "product", imgExtension);
     var imgPathName = getImagePathName(imgName);
 
     console.log(menuItem);
@@ -484,7 +511,7 @@ server.put("/menu-items", function(req, res, next) {
         if (err) throw err;
 
         if(isImagemAlterada) {
-            var imgName = getImageName(companyId, imgExtension);
+            var imgName = getImageName(companyId, "product", imgExtension);
             var imgPathName = getImagePathName(imgName);
             fs.writeFileSync(imgPathName, base64Img, 'base64');        }
 
@@ -827,8 +854,8 @@ function insertCheckoutItemRecursive(checkoutItems, index, pedidoId) {
     });    
 }
 
-function getImageName(companyId, imgExtension) {
-    return `company-${companyId}-product-${uuidv4()}.${imgExtension}`;
+function getImageName(companyId, type, imgExtension) {
+    return `company-${companyId}-${type}-${uuidv4()}.${imgExtension}`;
 }
 
 function getImagePathName(imgName) {

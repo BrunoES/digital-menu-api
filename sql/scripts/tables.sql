@@ -43,6 +43,8 @@ CREATE TABLE `digital_menu`.`company` (
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8
 COLLATE = utf8_unicode_ci;
+ALTER TABLE `digital_menu`.`company` 
+ADD COLUMN `logo_url` VARCHAR(255) NULL AFTER `active`;
 
 CREATE TABLE `user_empresa` (
   `email` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
