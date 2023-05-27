@@ -175,7 +175,24 @@ server.get("/company", function (req, res, next) {
     var sql = "SELECT * FROM digital_menu.v_company_user WHERE id_company = ?";
     con.query(sql, companyId, function (err, result, fields) {
         if (err) throw err;
-        res.send(result);
+        var company;
+        var content;
+
+        if(result.length > 0 ) {
+            company = result[0];
+            console.log(company);
+            const fileExists = fs.existsSync(company.logo_url);
+
+            console.log(fileExists);
+            if(fileExists) {
+                content = fs.readFileSync(company.logo_url, {encoding: 'base64'});
+            }
+        }
+
+        res.send({
+            company,
+            base64Img: `data:image/png;base64,${content}`
+        });
     });
 });
 
