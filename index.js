@@ -9,7 +9,7 @@ const QRCode = require('qrcode');
 const nodemailer = require('nodemailer');
 
 const cors = corsMiddleware({
-  origins: ["http://localhost:9091", "*"],
+  origins: ["http://localhost:9091"],
   allowHeaders: ["Access-Control-Allow-Origin", "*"],
   exposeHeaders: ["*"]
 });
@@ -170,6 +170,35 @@ function getCompanyIdFromRequest(req) {
 // Get By Id
 // Retorna dados da empresa logada.
 server.get("/company", function (req, res, next) {
+    const companyId = getCompanyIdFromRequest(req);
+
+    var sql = "SELECT * FROM digital_menu.company WHERE id = ?";
+    con.query(sql, companyId, function (err, result, fields) {
+        if (err) throw err;
+        var company;
+        var content;
+
+        if(result.length > 0 ) {
+            company = result[0];
+            console.log(company);
+            const fileExists = fs.existsSync(company.logo_url);
+
+            console.log(fileExists);
+            if(fileExists) {
+                content = fs.readFileSync(company.logo_url, {encoding: 'base64'});
+            }
+        }
+
+        res.send({
+            name: company.name,
+            base64Img: `data:image/png;base64,${content}`
+        });
+    });
+});
+
+// Get By Id
+// Retorna dados da empresa logada.
+server.get("/company-user", function (req, res, next) {
     const companyId = getCompanyIdFromRequest(req);
 
     var sql = "SELECT * FROM digital_menu.v_company_user WHERE id_company = ?";
@@ -790,9 +819,9 @@ server.post("/pedidos/check", function(req, res, next) {
         console.log(result);
 
         if(result.affectedRows == 0) {      
-            res.send(201);
-        } else {
             res.send(500);
+        } else {
+            res.send(201);
         }
     });
 });
