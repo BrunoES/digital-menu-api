@@ -9,7 +9,7 @@ const QRCode = require('qrcode');
 const nodemailer = require('nodemailer');
 
 const cors = corsMiddleware({
-  origins: ["http://localhost:9091"],
+  origins: ["*"], // ""http://localhost:9091" http://localhost:3000"
   allowHeaders: ["Access-Control-Allow-Origin", "*"],
   exposeHeaders: ["*"]
 });
@@ -67,8 +67,9 @@ function isAuthUrl(url) {
     return ((url != "/login") &&
             (url != "/signup") &&
             (url != "/signup") &&
-            (!url.includes("/activate"))&&
-            url != "/request-change-password" &&
+            (url != "/request-change-password") &&
+            (!url.includes("/external")) &&
+            (!url.includes("/activate")) &&
             (!url.includes("/redirect-change-password")) &&
             (!url.includes("/change-password")));
 }
@@ -82,6 +83,7 @@ server.pre((req, res, next) => {
     
     // Se nao for /login, tenta autenticar.  
     if(isAuthUrl(req.url)) {
+        console.log("entrei true")
         const token = getCleanTokenFromRequest(req);
         console.log("Validando token: " + token);
 
@@ -104,6 +106,7 @@ server.pre((req, res, next) => {
         }
         
     } else {
+        console.log("entrei false")
         return next();
     }
 });
@@ -496,8 +499,7 @@ server.get("/menu-items", function(req, res, next) {
     const companyId = getCompanyIdFromRequest(req);
 
     var response = [];
-    var countMenuItemsProcessados = 0;
-    var sql = "SELECT * FROM digital_menu.menu_items order by id";
+    var sql = `SELECT * FROM digital_menu.menu_items where id_company = '${companyId}' order by id`;
     
     con.query(sql, function (err, result, fields) {
         if (!handleError(err, res)) return;
@@ -536,7 +538,7 @@ server.post("/menu-items", function(req, res, next) {
 
     fs.writeFileSync(imgPathName, base64Img, 'base64');
 
-    var sql = `INSERT INTO digital_menu.menu_items (name, description, price, img_url) VALUES ('${menuItem.name}', '${menuItem.description}', '${menuItem.price}', '${imgPathName}')`
+    var sql = `INSERT INTO digital_menu.menu_items (id_company, name, description, price, img_url) VALUES ('${companyId}', '${menuItem.name}', '${menuItem.description}', '${menuItem.price}', '${imgPathName}')`
 
     console.log(sql);
 
@@ -577,7 +579,7 @@ server.put("/menu-items", function(req, res, next) {
                                 description = '${menuItem.description}',
                                 price = '${menuItem.price}',
                                 img_url = ` + (isImagemAlterada ? `'${imgPathName}'` : 'img_url') +
-                        ` WHERE id = ${menuItem.id}`;
+                        ` WHERE id = ${menuItem.id} AND id_company = ${companyId}`;
 
         console.log(sqlUpdate);
 
@@ -595,9 +597,9 @@ server.del("/menu-items/:id", function(req, res, next) {
     var id = req.params.id;
     console.log("Deletando item de ID: %d", id);
 
-    var sql = "DELETE FROM digital_menu.menu_items WHERE id = ?";
+    var sql = `DELETE FROM digital_menu.menu_items WHERE id = '${id}' AND id_company = '${companyId}'`;
     
-    con.query(sql, id, function (err, result, fields) {
+    con.query(sql, function (err, result, fields) {
         if (!handleError(err, res)) return;
         console.log(result);
         res.send("Linhas deletadas" + result.affectedRows);
@@ -614,7 +616,7 @@ server.get("/mesas", function(req, res, next) {
     console.log(req);
     console.log(req.header("Authorization"));
     
-    var sql = "SELECT * FROM digital_menu.mesa_empresa";
+    var sql = `SELECT * FROM digital_menu.mesa_empresa WHERE id_company = '${companyId}'`;
     con.query(sql, function (err, resultMesas, fields) {
         if (!handleError(err, res)) return;
         console.log(resultMesas);
@@ -688,9 +690,9 @@ server.del("/mesas/:tableNumber", function(req, res, next) {
     var tableNumber = req.params.tableNumber;
     console.log("Deletando mesa de número: %d", tableNumber);
 
-    var sql = "DELETE FROM digital_menu.mesa_empresa WHERE table_number = ?";
+    var sql = `DELETE FROM digital_menu.mesa_empresa WHERE table_number = '${tableNumber}' AND id_company = ${companyId}`;
     
-    con.query(sql, tableNumber, function (err, result, fields) {
+    con.query(sql, function (err, result, fields) {
         if (!handleError(err, res)) return;
         console.log(result);
         res.send("Linhas deletadas" + result.affectedRows);
@@ -707,36 +709,6 @@ server.get("/pedidos/:id", function (req, res, next) {
     con.query(sqlDetalheItems, id, function (err, resultItems, fields) {
         if (!handleError(err, res)) return;
         res.send(resultItems);
-    });
-});
-
-// Get By Id Customer
-server.get("/pedidos-by-customer-id/:id", function (req, res, next) {
-    var customerId = req.params.id;
-    var response = [];
-    var countPedidosProcessados = 0;
-    var qtdPedidos = 0;
-
-    var sqlPedidos = "SELECT * FROM digital_menu.pedidos WHERE id_customer = ? ORDER BY date_hour DESC";
-    con.query(sqlPedidos, customerId, function (err, resultPedido, fields) {
-        if (!handleError(err, res)) return;
-        qtdPedidos = resultPedido.length;
-        resultPedido.forEach(pedido => {
-            var sqlDetalheItems = "SELECT id_pedido, id_menu, name, price, quantity FROM digital_menu.v_menu_items_pedidos_detalhe WHERE id_pedido = ?";
-            con.query(sqlDetalheItems, pedido.id, function (err, resultItems, fields) {
-                if (!handleError(err, res)) return;
-
-                response.push({
-                    pedido: pedido,
-                    detalheItems: resultItems
-                });
-                countPedidosProcessados++;
-
-                if(countPedidosProcessados === qtdPedidos) {
-                    res.send(response);
-                }
-            });    
-        });
     });
 });
 
@@ -797,33 +769,14 @@ server.get("/pedidos/:initialDate/:finalDate", function (req, res, next) {
 });
 
 // Post
-server.post("/pedidos", function(req, res, next) {
-    var pedido = req.body;
-    var checkoutItems = pedido.checkoutItems; 
-    var customerId;
-
-    console.log("ID: " + pedido.customerId);
-    console.log(pedido);
-    if(parseInt(pedido.customerId) > 0) {
-        // Usuário já existente, cadastra apenas o pedido.
-        customerId = pedido.customerId;
-        insertCheckout(pedido, checkoutItems, customerId);
-    } else {
-        // Primeiro pedido, cadastra usuario e depois pedido.
-        insertCustomer(pedido, checkoutItems, customerId);
-    }
-    
-    res.send("Linhas inseridas com sucesso.");
-});
-
-
-// Post
 server.post("/pedidos/check", function(req, res, next) {
+    const companyId = getCompanyIdFromRequest(req);
+
     var pedidoId = req.body.pedidoId;
 
     var sql = `UPDATE digital_menu.pedidos 
                   SET checked = '1'
-                WHERE id = '${pedidoId}'`
+                WHERE id = '${pedidoId}' AND id_company = '${companyId}'`;
 
     con.query(sql, function(err, result) {
         if (!handleError(err, res)) return;
@@ -855,6 +808,90 @@ server.get("/pedidos/count", function(req, res, next) {
 
 // -----------------------------------------------------------------------------------------------
 
+// - External APIS: ------------------------------------------------------------------------------
+
+// Get All
+server.get("/external/menu-items/:companyId", function(req, res, next) {
+    var companyId = req.params.companyId;
+    var response = [];
+    var sql = `SELECT * FROM digital_menu.menu_items where id_company = '${companyId}' order by id`;
+    
+    con.query(sql, function (err, result, fields) {
+        if (!handleError(err, res)) return;
+        console.log(result);
+
+        result.forEach(menuItem => {
+
+            const fileExists = fs.existsSync(menuItem.img_url);
+            var content = '';
+
+            console.log(fileExists);
+            if(fileExists) {
+                content = fs.readFileSync(menuItem.img_url, {encoding: 'base64'});
+            }
+            response.push({
+                menuItem: menuItem,
+                base64Img: `data:image/png;base64,${content}`
+            });
+        })
+
+        res.send(response);
+    });
+});
+
+// Get By Id Customer
+server.get("/external/pedidos/:customerId", function (req, res, next) {
+    var customerId = req.params.customerId;
+    var response = [];
+    var countPedidosProcessados = 0;
+    var qtdPedidos = 0;
+
+    var sqlPedidos = "SELECT * FROM digital_menu.v_pedidos_company WHERE id_customer = ? ORDER BY date_hour DESC";
+    con.query(sqlPedidos, customerId, function (err, resultPedido, fields) {
+        if (!handleError(err, res)) return;
+        qtdPedidos = resultPedido.length;
+        resultPedido.forEach(pedido => {
+            var sqlDetalheItems = "SELECT id_pedido, id_menu, name, price, quantity FROM digital_menu.v_menu_items_pedidos_detalhe WHERE id_pedido = ?";
+            con.query(sqlDetalheItems, pedido.id, function (err, resultItems, fields) {
+                if (!handleError(err, res)) return;
+
+                response.push({
+                    pedido: pedido,
+                    detalheItems: resultItems
+                });
+                countPedidosProcessados++;
+
+                if(countPedidosProcessados === qtdPedidos) {
+                    res.send(response);
+                }
+            });    
+        });
+    });
+});
+
+// Post
+server.post("/external/pedidos", function(req, res, next) {
+    var pedido = req.body;
+    var checkoutItems = pedido.checkoutItems; 
+    var customerId;
+
+    console.log("ID Customer: " + pedido.customerId);
+    console.log("ID Company: " + pedido.companyId);
+    console.log(pedido);
+    if(parseInt(pedido.customerId) > 0) {
+        // Usuário já existente, cadastra apenas o pedido.
+        customerId = pedido.customerId;
+        insertCheckout(pedido, checkoutItems, customerId, res);
+    } else {
+        // Primeiro pedido, cadastra usuario e depois pedido.
+        insertCustomer(pedido, checkoutItems, customerId, res);
+    }
+    
+    res.send("Linhas inseridas com sucesso.");
+});
+
+// -----------------------------------------------------------------------------------------------
+
 server.listen(8080, function() {
     console.log("Listening at %s", server.url);
 });
@@ -866,19 +903,19 @@ con.connect(function(err) {
 
 // --
 
-function insertCustomer(pedido, checkoutItems, customerId) {
+function insertCustomer(pedido, checkoutItems, customerId, res) {
     var sqlCliente = `INSERT INTO digital_menu.clientes (customer_name) VALUES ('${pedido.customerName}')`
     con.query(sqlCliente, function(err, result) {
         if (!handleError(err, res)) return;
         console.log(result);
         customerId = result.insertId;
 
-        insertCheckout(pedido, checkoutItems, customerId);
+        insertCheckout(pedido, checkoutItems, customerId, res);
     });
 }
 
-function insertCheckout(pedido, checkoutItems, customerId) {
-    var sqlPedido = `INSERT INTO digital_menu.pedidos (id_customer, total, obs) VALUES ('${customerId}', '${pedido.total}', '${pedido.obs}')`
+function insertCheckout(pedido, checkoutItems, customerId, res) {
+    var sqlPedido = `INSERT INTO digital_menu.pedidos (id_customer, id_company, total, obs) VALUES ('${customerId}', '${pedido.companyId}', '${pedido.total}', '${pedido.obs}')`
     con.query(sqlPedido, function(err, result) {
         if (!handleError(err, res)) return;
         console.log(result);
@@ -888,11 +925,11 @@ function insertCheckout(pedido, checkoutItems, customerId) {
     });
 }
 
-function insertCheckoutItems(checkoutItems, pedidoId) {
-    insertCheckoutItemRecursive(checkoutItems, 0, pedidoId);
+function insertCheckoutItems(checkoutItems, pedidoId, res) {
+    insertCheckoutItemRecursive(checkoutItems, 0, pedidoId, res);
 }
 
-function insertCheckoutItemRecursive(checkoutItems, index, pedidoId) {
+function insertCheckoutItemRecursive(checkoutItems, index, pedidoId, res) {
     var item = checkoutItems[index];
 
     console.dir("Inserindo item: ");

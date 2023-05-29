@@ -6,12 +6,13 @@ CREATE TABLE `clientes` (
 
 CREATE TABLE `menu_items` (
   `id` int NOT NULL AUTO_INCREMENT,
+  `id_company` int NOT NULL,
   `name` varchar(60) COLLATE utf8_unicode_ci NOT NULL,
   `description` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
   `price` float NOT NULL,
   `img_url` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=42 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci
 
 CREATE TABLE `menu_items_pedidos` (
   `id_item` int NOT NULL,
