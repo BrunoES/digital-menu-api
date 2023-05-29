@@ -53,6 +53,16 @@ server.use(restify.plugins.queryParser());
 server.pre(cors.preflight); // Precisa usar restify 7.x.x + restify-cors-middleware para ser compatível com cors preflight.
 server.use(cors.actual);
 
+// Tratamento de erros.
+function handleError(err, res) {
+    if (err) {
+        console.dir(err);
+        res.send(500, "Iternal Server Error");
+        return false
+    }
+    return true;
+}
+
 function isAuthUrl(url) {
     return ((url != "/login") &&
             (url != "/signup") &&
@@ -79,7 +89,7 @@ server.pre((req, res, next) => {
             var sql = `SELECT * FROM digital_menu.user_token WHERE token = '${token}'`;
 
             con.query(sql, function(err, result) {
-                if (err) throw err;
+                if (!handleError(err, res)) return;
                 console.log(result)
                 if(result.length > 0) {
                     var user = result[0].email;
@@ -118,7 +128,7 @@ server.post("/login", function(req, res, next) {
 
     con.query(sql, function (err, result, fields) {
 
-        if (err) throw err;
+        if (!handleError(err, res)) return;
         console.log(result);
 
         if(result.length > 0) {
@@ -144,7 +154,7 @@ function insereUserToken(email, token) {
     console.log(sql);
 
     con.query(sql, function(err, result) {
-        if (err) throw err;
+        if (!handleError(err, res)) return;
         console.log(result);
     });
 }
@@ -174,7 +184,8 @@ server.get("/company", function (req, res, next) {
 
     var sql = "SELECT * FROM digital_menu.company WHERE id = ?";
     con.query(sql, companyId, function (err, result, fields) {
-        if (err) throw err;
+        if (!handleError(err, res)) return;
+
         var company;
         var content;
 
@@ -201,9 +212,9 @@ server.get("/company", function (req, res, next) {
 server.get("/company-user", function (req, res, next) {
     const companyId = getCompanyIdFromRequest(req);
 
-    var sql = "SELECT * FROM digital_menu.v_company_user WHERE id_company = ?";
+    var sql = "SELECT company_name, id_company, logo_url, user_email FROM digital_menu.v_company_user WHERE id_company = ?";
     con.query(sql, companyId, function (err, result, fields) {
-        if (err) throw err;
+        if (!handleError(err, res)) return;
         var company;
         var content;
 
@@ -246,7 +257,7 @@ server.post("/company/logo", function (req, res, next) {
     console.log(sqlUpdate);
 
     con.query(sqlUpdate, function(err, result) {
-        if (err) throw err;
+        if (!handleError(err, res)) return;
         console.log(result);
         res.send("Linhas alteradas: " + result.affectedRows);
     });
@@ -264,7 +275,7 @@ server.put("/company", function (req, res, next) {
 
     var sql = "SELECT * FROM digital_menu.v_company_user WHERE id_company = ?";
     con.query(sql, companyId, function (err, result, fields) {
-        if (err) throw err;
+        if (!handleError(err, res)) return;
         var companyData = result[0];
         var originalName = companyData.company_name;
         var originalEmail = companyData.user_email;
@@ -287,11 +298,11 @@ server.put("/company", function (req, res, next) {
                               WHERE email    = '${originalEmail}';`;
         
         con.query(sqlUpdateCompany, function(err, resultCompany) {
-            if (err) throw err;
+            if (!handleError(err, res)) return;
             console.log(resultCompany);
 
             con.query(sqlUpdateUser, function(err, resultUser) {
-                if (err) throw err;
+                if (!handleError(err, res)) return;
                 console.log(resultUser);
 
                 sendChangeAccountDataMail(originalName, originalEmail);
@@ -311,13 +322,13 @@ server.post("/signup", function(req, res, next) {
     console.log(sqlCompany);
 
     con.query(sqlCompany, function(err, resultCompany) {
-        if (err) throw err;
+        if (!handleError(err, res)) return;
         console.log(resultCompany);
         // Usuario comeca como inativo, para ser ativado via API de ativacao.
         var sqlUser = `INSERT INTO digital_menu.user_empresa (email, password, id_company, blocked, active) VALUES ('${company.user}', '${company.password}', '${resultCompany.insertId}', '0', '0')`;
         
         con.query(sqlUser, function(err, resultUser) {
-            if (err) throw err;
+            if (!handleError(err, res)) return;
             console.log(resultUser);
 
             sendActivateMail(company.name, company.user);
@@ -343,7 +354,7 @@ server.post("/change-password", function(req, res, next) {
                       and temp_token_change_pass is not null`;
 
         con.query(sql, function(err, result) {
-            if (err) throw err;
+            if (!handleError(err, res)) return;
             console.log(result);
 
             if(result.affectedRows == 0) {      
@@ -364,7 +375,7 @@ server.post("/request-change-password", function(req, res, next) {
 
     con.query(sql, function (err, result, fields) {
 
-        if (err) throw err;
+        if (!handleError(err, res)) return;
         console.log(result);
 
         if(result.length > 0) {
@@ -386,7 +397,7 @@ server.get("/redirect-change-password/:user", function(req, res, next) {
                WHERE email = '${user}'`
 
     con.query(sql, function(err, result) {
-        if (err) throw err;
+        if (!handleError(err, res)) return;
         console.log(result);
 
         if(result.affectedRows == 0) {      
@@ -466,7 +477,7 @@ server.get("/activate/:user", function(req, res, next) {
                WHERE email = '${user}'`
 
     con.query(sql, function(err, result) {
-        if (err) throw err;
+        if (!handleError(err, res)) return;
         console.log(result);
 
         if(result.affectedRows == 0) {      
@@ -489,7 +500,7 @@ server.get("/menu-items", function(req, res, next) {
     var sql = "SELECT * FROM digital_menu.menu_items order by id";
     
     con.query(sql, function (err, result, fields) {
-        if (err) throw err;
+        if (!handleError(err, res)) return;
         console.log(result);
 
         result.forEach(menuItem => {
@@ -530,7 +541,7 @@ server.post("/menu-items", function(req, res, next) {
     console.log(sql);
 
     con.query(sql, function(err, result) {
-        if (err) throw err;
+        if (!handleError(err, res)) return;
         console.log(result);
         res.send("Linhas inseridas: " + result.affectedRows);
     });
@@ -554,7 +565,7 @@ server.put("/menu-items", function(req, res, next) {
 
     var sqlSelect = "SELECT * FROM digital_menu.menu_items WHERE id = ?";
     con.query(sqlSelect, menuItem.id, function (err, result, fields) {
-        if (err) throw err;
+        if (!handleError(err, res)) return;
 
         if(isImagemAlterada) {
             var imgName = getImageName(companyId, "product", imgExtension);
@@ -571,7 +582,7 @@ server.put("/menu-items", function(req, res, next) {
         console.log(sqlUpdate);
 
         con.query(sqlUpdate, function(err, result) {
-            if (err) throw err;
+            if (!handleError(err, res)) return;
             console.log(result);
             res.send("Linhas alteradas: " + result.affectedRows);
         });
@@ -587,7 +598,7 @@ server.del("/menu-items/:id", function(req, res, next) {
     var sql = "DELETE FROM digital_menu.menu_items WHERE id = ?";
     
     con.query(sql, id, function (err, result, fields) {
-        if (err) throw err;
+        if (!handleError(err, res)) return;
         console.log(result);
         res.send("Linhas deletadas" + result.affectedRows);
     });
@@ -605,7 +616,7 @@ server.get("/mesas", function(req, res, next) {
     
     var sql = "SELECT * FROM digital_menu.mesa_empresa";
     con.query(sql, function (err, resultMesas, fields) {
-        if (err) throw err;
+        if (!handleError(err, res)) return;
         console.log(resultMesas);
         
         resultMesas.forEach(mesa => {
@@ -643,7 +654,7 @@ server.patch("/mesas", function(req, res, next) {
                  AND id_company   = '${companyId}'`
 
     con.query(sql, function(err, result) {
-        if (err) throw err;
+        if (!handleError(err, res)) return;
         console.log(result);
 
         if(result.affectedRows == 0) {      
@@ -655,12 +666,12 @@ server.patch("/mesas", function(req, res, next) {
             QRCode.toFile(qrCodePathName, qrCodeURl, {
                 errorCorrectionLevel: 'H'
             }, function(err) {
-                if (err) throw err;
+                if (!handleError(err, res)) return;
                 console.log('QR code saved!');    
 
                 var sqlInsert = `INSERT INTO digital_menu.mesa_empresa (table_number, id_company, complement, qrcode_url) VALUES ('${mesa.tableNumber}', '${companyId}', '${mesa.complement}', '${qrCodePathName}')`;
                 con.query(sqlInsert, function(err, result) {
-                    if (err) throw err;
+                    if (!handleError(err, res)) return;
                     console.log(result);
                     res.send("Linhas inseridas: " + result.affectedRows);
                 });
@@ -680,7 +691,7 @@ server.del("/mesas/:tableNumber", function(req, res, next) {
     var sql = "DELETE FROM digital_menu.mesa_empresa WHERE table_number = ?";
     
     con.query(sql, tableNumber, function (err, result, fields) {
-        if (err) throw err;
+        if (!handleError(err, res)) return;
         console.log(result);
         res.send("Linhas deletadas" + result.affectedRows);
     });
@@ -694,7 +705,7 @@ server.get("/pedidos/:id", function (req, res, next) {
 
     var sqlDetalheItems = "SELECT * FROM digital_menu.v_menu_items_pedidos_detalhe WHERE id_pedido = ?";
     con.query(sqlDetalheItems, id, function (err, resultItems, fields) {
-        if (err) throw err;
+        if (!handleError(err, res)) return;
         res.send(resultItems);
     });
 });
@@ -708,12 +719,12 @@ server.get("/pedidos-by-customer-id/:id", function (req, res, next) {
 
     var sqlPedidos = "SELECT * FROM digital_menu.pedidos WHERE id_customer = ? ORDER BY date_hour DESC";
     con.query(sqlPedidos, customerId, function (err, resultPedido, fields) {
-        if (err) throw err;
+        if (!handleError(err, res)) return;
         qtdPedidos = resultPedido.length;
         resultPedido.forEach(pedido => {
             var sqlDetalheItems = "SELECT id_pedido, id_menu, name, price, quantity FROM digital_menu.v_menu_items_pedidos_detalhe WHERE id_pedido = ?";
             con.query(sqlDetalheItems, pedido.id, function (err, resultItems, fields) {
-                if (err) throw err;
+                if (!handleError(err, res)) return;
 
                 response.push({
                     pedido: pedido,
@@ -746,12 +757,12 @@ server.get("/pedidos-full/:initialDateHour/:finalDateHour", function (req, res, 
 
     var sqlPedidos = `SELECT * FROM digital_menu.v_historico_pedidos WHERE date_hour BETWEEN '${initialDateHour}' AND '${finalDateHour}' AND id_company = ${companyId} ORDER BY date_hour DESC`;
     con.query(sqlPedidos, function (err, resultPedido, fields) {
-        if (err) throw err;
+        if (!handleError(err, res)) return;
         qtdPedidos = resultPedido.length;
         resultPedido.forEach(pedido => {
             var sqlDetalheItems = "SELECT * FROM digital_menu.v_menu_items_pedidos_detalhe WHERE id_pedido = ?";
             con.query(sqlDetalheItems, pedido.id_pedido, function (err, resultItems, fields) {
-                if (err) throw err;
+                if (!handleError(err, res)) return;
 
                 response.push({
                     pedido: pedido,
@@ -780,7 +791,7 @@ server.get("/pedidos/:initialDate/:finalDate", function (req, res, next) {
 
     var sqlPedidos = `SELECT * FROM digital_menu.v_historico_pedidos WHERE date_hour BETWEEN '${initialDate}' AND '${finalDate}' AND id_company = ${companyId}`;
     con.query(sqlPedidos, function (err, resultPedido, fields) {
-        if (err) throw err;
+        if (!handleError(err, res)) return;
         res.send(resultPedido);
     });
 });
@@ -815,7 +826,7 @@ server.post("/pedidos/check", function(req, res, next) {
                 WHERE id = '${pedidoId}'`
 
     con.query(sql, function(err, result) {
-        if (err) throw err;
+        if (!handleError(err, res)) return;
         console.log(result);
 
         if(result.affectedRows == 0) {      
@@ -833,7 +844,7 @@ server.get("/pedidos/count", function(req, res, next) {
     var sql = `SELECT count(*) as count FROM digital_menu.pedidos WHERE id_company = ?`;
     console.log(sql);
     con.query(sql, companyId, function (err, result, fields) {
-        if (err) throw err;
+        if (!handleError(err, res)) return;
         if(result.length > 0) {      
             res.send( { count : result[0].count } ) ;
         } else {
@@ -858,7 +869,7 @@ con.connect(function(err) {
 function insertCustomer(pedido, checkoutItems, customerId) {
     var sqlCliente = `INSERT INTO digital_menu.clientes (customer_name) VALUES ('${pedido.customerName}')`
     con.query(sqlCliente, function(err, result) {
-        if (err) throw err;
+        if (!handleError(err, res)) return;
         console.log(result);
         customerId = result.insertId;
 
@@ -869,7 +880,7 @@ function insertCustomer(pedido, checkoutItems, customerId) {
 function insertCheckout(pedido, checkoutItems, customerId) {
     var sqlPedido = `INSERT INTO digital_menu.pedidos (id_customer, total, obs) VALUES ('${customerId}', '${pedido.total}', '${pedido.obs}')`
     con.query(sqlPedido, function(err, result) {
-        if (err) throw err;
+        if (!handleError(err, res)) return;
         console.log(result);
         pedidoId = result.insertId;
 
@@ -889,7 +900,7 @@ function insertCheckoutItemRecursive(checkoutItems, index, pedidoId) {
 
     var sqlMenuItemsPedidos = `INSERT INTO digital_menu.menu_items_pedidos (id_item, id_pedido, quantity, price) VALUES ('${item.itemId}', '${pedidoId}', '${item.quantity}', '${item.price}')`
     con.query(sqlMenuItemsPedidos, function(err, result) {
-        if (err) throw err;
+        if (!handleError(err, res)) return;
         console.log(result);
 
         console.log("Size:" + checkoutItems.length);
