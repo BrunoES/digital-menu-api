@@ -35,6 +35,8 @@ ALTER TABLE `digital_menu`.`pedidos`
 ADD COLUMN `checked` TINYINT NULL AFTER `date_hour`;
 ALTER TABLE `digital_menu`.`pedidos` 
 CHANGE COLUMN `checked` `checked` TINYINT NULL DEFAULT 0 ;
+ALTER TABLE `digital_menu`.`pedidos` 
+ADD COLUMN `table_number` INT NOT NULL AFTER `id_company`;
 
 CREATE TABLE `digital_menu`.`company` (
   `id` INT NOT NULL AUTO_INCREMENT,

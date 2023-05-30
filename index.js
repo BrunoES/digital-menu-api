@@ -875,6 +875,7 @@ server.post("/external/pedidos", function(req, res, next) {
 
     console.log("ID Customer: " + pedido.customerId);
     console.log("ID Company: " + pedido.companyId);
+    console.log("Table Number: " + pedido.tableNumber);
     console.log(pedido);
     if(parseInt(pedido.customerId) > 0) {
         // Usuário já existente, cadastra apenas o pedido.
@@ -913,7 +914,7 @@ function insertCustomer(pedido, checkoutItems, customerId, res) {
 }
 
 function insertCheckout(pedido, checkoutItems, customerId, res) {
-    var sqlPedido = `INSERT INTO digital_menu.pedidos (id_customer, id_company, total, obs) VALUES ('${customerId}', '${pedido.companyId}', '${pedido.total}', '${pedido.obs}')`
+    var sqlPedido = `INSERT INTO digital_menu.pedidos (id_customer, id_company, table_number, total, obs) VALUES ('${customerId}', '${pedido.companyId}', '${pedido.tableNumber}', '${pedido.total}', '${pedido.obs}')`
     con.query(sqlPedido, function(err, result) {
         if (!handleError(err, res)) return;
         console.log(result);
