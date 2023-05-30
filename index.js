@@ -104,7 +104,6 @@ server.pre((req, res, next) => {
         } else {
             res.send(ACCESS_DENIED);
         }
-        
     } else {
         console.log("entrei false")
         return next();
@@ -130,13 +129,12 @@ server.post("/login", function(req, res, next) {
     console.log(sql);
 
     con.query(sql, function (err, result, fields) {
-
         if (!handleError(err, res)) return;
         console.log(result);
 
         if(result.length > 0) {
             var token = uuidv4();
-            insereUserToken(credentials.user, token);
+            insereUserToken(credentials.user, token, res);
             token = token + "," + result[0].id_company + "," + result[0].company_name; // Formatando token no formato: token + id da empresa + nome da empresa.
 
             res.send(201, {
@@ -151,7 +149,7 @@ server.post("/login", function(req, res, next) {
 });
 
 
-function insereUserToken(email, token) {
+function insereUserToken(email, token, res) {
     var sql = `INSERT INTO digital_menu.user_token (email, token) VALUES ('${email}', '${token}')`
 
     console.log(sql);
