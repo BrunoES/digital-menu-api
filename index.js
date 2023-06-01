@@ -182,6 +182,7 @@ function getCompanyIdFromRequest(req) {
 // Retorna dados da empresa logada.
 server.get("/company", function (req, res, next) {
     const companyId = getCompanyIdFromRequest(req);
+    var base64Img = '';
 
     var sql = "SELECT * FROM digital_menu.company WHERE id = ?";
     con.query(sql, companyId, function (err, result, fields) {
@@ -198,12 +199,13 @@ server.get("/company", function (req, res, next) {
             console.log(fileExists);
             if(fileExists) {
                 content = fs.readFileSync(company.logo_url, {encoding: 'base64'});
+                base64Img = `data:image/png;base64,${content}`;
             }
         }
 
         res.send({
             name: company.name,
-            base64Img: `data:image/png;base64,${content}`
+            base64Img: base64Img
         });
     });
 });
@@ -212,6 +214,7 @@ server.get("/company", function (req, res, next) {
 // Retorna dados da empresa logada.
 server.get("/company-user", function (req, res, next) {
     const companyId = getCompanyIdFromRequest(req);
+    var base64Img = '';
 
     var sql = "SELECT company_name, id_company, logo_url, user_email FROM digital_menu.v_company_user WHERE id_company = ?";
     con.query(sql, companyId, function (err, result, fields) {
@@ -227,12 +230,13 @@ server.get("/company-user", function (req, res, next) {
             console.log(fileExists);
             if(fileExists) {
                 content = fs.readFileSync(company.logo_url, {encoding: 'base64'});
+                base64Img = `data:image/png;base64,${content}`;
             }
         }
 
         res.send({
             company,
-            base64Img: `data:image/png;base64,${content}`
+            base64Img: base64Img
         });
     });
 });
