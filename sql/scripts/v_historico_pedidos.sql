@@ -12,6 +12,7 @@ VIEW `digital_menu`.`v_historico_pedidos` AS
         `clientes`.`customer_name` AS `customer_name`,
         `pedidos`.`obs` AS `obs`,
         `pedidos`.`id_company` AS `id_company`,
+        `pedidos`.`table_number` AS `table_number`,
         `pedidos`.`checked` AS `checked`
     FROM
         (`clientes`
