@@ -123,7 +123,13 @@ server.opts("/menu-items", function(req, res, next) {
 // Post
 server.post("/login", function(req, res, next) {
     var credentials = req.body;
-    var sql = `SELECT * FROM digital_menu.v_company_user WHERE user_active = 1 and user_blocked = 0 and (user_email = '${credentials.user}' and user_password = '${credentials.password}')`;
+    var escapedUser = escapeSQL(credentials.user);
+    var escapedPassword = escapeSQL(credentials.password);
+
+    console.log(escapedUser);
+    console.log(escapedPassword);
+
+    var sql = `SELECT * FROM digital_menu.v_company_user WHERE user_active = 1 and user_blocked = 0 and (user_email = ${escapedUser} and user_password = ${escapedPassword})`;
 
     console.dir(credentials);
     console.log(sql);
@@ -903,6 +909,12 @@ con.connect(function(err) {
     if(err) throw err;
     console.log("Connected!");
 });
+
+// --
+
+function escapeSQL(value) {
+    return con.escape(value);
+}
 
 // --
 
