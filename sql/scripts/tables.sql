@@ -59,6 +59,8 @@ CREATE TABLE `user_empresa` (
   PRIMARY KEY (`email`),
   UNIQUE KEY `email_UNIQUE` (`email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+ALTER TABLE `digital_menu`.`user_empresa` 
+CHANGE COLUMN `password` `password` VARCHAR(32) NOT NULL ;
 
 CREATE TABLE `digital_menu`.`mesa_empresa` (
   `table_number` INT NOT NULL,
