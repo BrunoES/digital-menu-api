@@ -81,6 +81,8 @@ CREATE TABLE `user_token` (
 ) ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8
 COLLATE = utf8_unicode_ci;
+ALTER TABLE `digital_menu`.`user_token` 
+ADD COLUMN `expired` TINYINT NULL DEFAULT 0 AFTER `token`;
 
 SET character_set_client = utf8;
 SET character_set_connection = utf8;

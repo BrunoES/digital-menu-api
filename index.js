@@ -89,7 +89,7 @@ server.pre((req, res, next) => {
             console.log("Validando token: " + token);
 
             if(token  != "") {
-                var sql = `SELECT * FROM digital_menu.user_token WHERE token = '${token}'`;
+                var sql = `SELECT * FROM digital_menu.user_token WHERE token = '${token}' AND expired = '0'`;
 
                 con.query(sql, function(err, result) {
                     if (!handleError(err, res)) return;
@@ -133,7 +133,7 @@ server.post("/login", function(req, res, next) {
 
         console.log(escapedUser);
         console.log(escapedPassword);
-
+        
         var sql = `SELECT * FROM digital_menu.v_company_user WHERE user_active = 1 and user_blocked = 0 and (user_email = ${escapedUser} and user_password = ${escapedPassword})`;
 
         console.dir(credentials);
@@ -145,7 +145,7 @@ server.post("/login", function(req, res, next) {
 
             if(result.length > 0) {
                 var token = uuidv4();
-                insereUserToken(credentials.user, token, res);
+                invalidaInsereUserTokens(escapedUser, token, res);
                 token = token + "," + result[0].id_company + "," + result[0].company_name; // Formatando token no formato: token + id da empresa + nome da empresa.
 
                 res.send(201, {
@@ -165,13 +165,36 @@ server.post("/login", function(req, res, next) {
 
 function insereUserToken(email, token, res) {
     try {
-        var sql = `INSERT INTO digital_menu.user_token (email, token) VALUES ('${email}', '${token}')`
+        var sql = `INSERT INTO digital_menu.user_token (email, token) VALUES (${email}, '${token}')`
 
         console.log(sql);
 
         con.query(sql, function(err, result) {
             if (!handleError(err, res)) return;
             console.log(result);
+        });
+    } catch(e) {
+        handleError(e ,res);
+    }
+}
+
+function invalidaInsereUserTokens(email, token, res) {
+    try {
+        var sql = `UPDATE digital_menu.user_token 
+                    SET expired = '1'
+                    WHERE email = ${email}`;
+
+        con.query(sql, function(err, result) {
+            if (!handleError(err, res)) return;
+            console.log(result);
+
+            if(result.affectedRows == 0) {      
+                console.log(`Nenhum token invalidado para o user ${email}`);
+            } else {
+                if(token != "") {
+                    insereUserToken(email, token, res);
+                }
+            }
         });
     } catch(e) {
         handleError(e ,res);
@@ -387,7 +410,15 @@ server.post("/change-password", function(req, res, next) {
         console.log("Token: " + uuidTokenChangePassword);
 
         if(uuidTokenChangePassword != '') {
-            var sql = `UPDATE digital_menu.user_empresa 
+            var sqlConsulta = `SELECT * FROM digital_menu.user_empresa WHERE temp_token_change_pass = '${uuidTokenChangePassword}'`;
+            con.query(sqlConsulta, function (err, resultConsulta, fields) {
+                if (!handleError(err, res)) return;
+                console.log(resultConsulta);
+    
+                if(resultConsulta.length > 0) {
+                    invalidaInsereUserTokens(`'${resultConsulta[0].email}'`, '', res);
+
+                    var sql = `UPDATE digital_menu.user_empresa 
                         SET temp_token_change_pass = '',
                             password = '${newPassword}'
                         WHERE active = 1
@@ -395,14 +426,18 @@ server.post("/change-password", function(req, res, next) {
                         and temp_token_change_pass = '${uuidTokenChangePassword}'
                         and temp_token_change_pass is not null`;
 
-            con.query(sql, function(err, result) {
-                if (!handleError(err, res)) return;
-                console.log(result);
+                    con.query(sql, function(err, result) {
+                        if (!handleError(err, res)) return;
+                        console.log(result);
 
-                if(result.affectedRows == 0) {      
-                    res.send(404, "");
+                        if(result.affectedRows == 0) {      
+                            res.send(404, "");
+                        } else {
+                            res.send(200, "");
+                        }
+                    });                    
                 } else {
-                    res.send(200, "");
+                    res.send(404, "");
                 }
             });
         }
