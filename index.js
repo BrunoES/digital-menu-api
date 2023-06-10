@@ -44,8 +44,11 @@ const BASE_URL_QRCODE_MESA = 'http://192.168.0.18:3000';
 const BASE_URL_SERVER = 'http://localhost:8080';
 const BASE_URL_FRONTEND = 'http://localhost:9091';
 
+const REDIRECT_LOGIN = `${BASE_URL_FRONTEND}/login`;
 const REDIRECT_USER_ACTIVATED = `${BASE_URL_FRONTEND}/user-activated`;
 const REDIRECT_CHANGE_PASSWORD = `${BASE_URL_FRONTEND}/change-password`;
+
+const TO_CHANGE = "TO_CHANGE";
 
 server.use(restify.plugins.bodyParser({ mapParams: true }));
 server.use(restify.plugins.acceptParser(server.acceptable));
@@ -57,7 +60,7 @@ server.use(cors.actual);
 function handleError(err, res) {
     if (err) {
         console.dir(err);
-        res.send(500, "Iternal Server Error");
+        res.send(500, "Internal Server Error");
         return false
     }
     return true;
@@ -84,7 +87,6 @@ server.pre((req, res, next) => {
         
         // Se nao for /login, tenta autenticar.  
         if(isAuthUrl(req.url)) {
-            console.log("entrei true")
             const token = getCleanTokenFromRequest(req);
             console.log("Validando token: " + token);
 
@@ -459,8 +461,21 @@ server.post("/request-change-password", function(req, res, next) {
             console.log(result);
 
             if(result.length > 0) {
-                sendChangePasswordeMail(user);
-                res.send(200, "");
+                    const uuidTokenChangePassword = uuidv4();
+                    var sqlUpdate = `UPDATE digital_menu.user_empresa SET temp_token_change_pass = '${uuidTokenChangePassword}' WHERE email = '${user}'`;
+                    console.log(sqlUpdate);
+                    con.query(sqlUpdate, function(errUpdate, resultUpdate) {
+                        if (!handleError(errUpdate, res)) return;
+                        console.log(resultUpdate);
+            
+                        if(resultUpdate.affectedRows > 0) {
+                            sendChangePasswordeMail(user, uuidTokenChangePassword);
+                            changeUserToRedefinePassword(user, res);
+                            res.send(200, "");
+                        } else {
+                            res.send(404, "");            
+                        }
+                    });
             } else {
                 res.send(404, "");
             }
@@ -470,28 +485,37 @@ server.post("/request-change-password", function(req, res, next) {
     }
 });
 
-// Get Change password through e-mail
-server.get("/redirect-change-password/:user", function(req, res, next) {
+function changeUserToRedefinePassword(user, res) {
     try {
-        const user = req.params.user;
-        const uuidTokenChangePassword = uuidv4();
-
         var sql = `UPDATE digital_menu.user_empresa 
-                    SET temp_token_change_pass = '${uuidTokenChangePassword}'
-                WHERE email = '${user}'`
+                      SET temp_token_change_pass = '${TO_CHANGE}'
+                    WHERE email = '${user}'
+                      and temp_token_change_pass = ''`;
 
         con.query(sql, function(err, result) {
             if (!handleError(err, res)) return;
             console.log(result);
+        });
+    } catch(e) {
+        handleError(e ,res);
+    }
+}
 
-            if(result.affectedRows == 0) {      
+// Get Change password through e-mail
+server.get("/redirect-change-password/:uuidTokenChangePassword", function(req, res, next) {
+    try {
+        const uuidTokenChangePassword = req.params.uuidTokenChangePassword;
 
-            } else {
-                // Validar se em vez de fazer isso, da pra redirecionar direto para a pagina HTML
-                //res.end(htmlContentChangePassword.replace("<TOKEN_CHANGE_PASSWORD>", uuidTokenChangePassword));
-                //res.header('Location', 'https://www.google.com');
-                //res.send();
+        var sql = `SELECT * FROM digital_menu.user_empresa WHERE temp_token_change_pass = '${uuidTokenChangePassword}'`;
+        console.log(sql);
+        con.query(sql, function (err, result, fields) {
+            if (!handleError(err, res)) return;
+            console.log(result);
+
+            if(result.length > 0) {
                 res.redirect(`${REDIRECT_CHANGE_PASSWORD}?uuidTokenChangePassword=${uuidTokenChangePassword}`, next)
+            } else {
+                res.redirect(`${REDIRECT_LOGIN}`, next)
             }
         });
     } catch(e) {
@@ -537,12 +561,12 @@ function sendActivateMail(name, email) {
     });
 }
 
-function sendChangePasswordeMail(email) {
+function sendChangePasswordeMail(email, uuidTokenChangePassword) {
     var mailOptions = {
         from: 'suporte.cardapil@gmail.com',
         to: email,
         subject: 'Cardapil - Redefinição de senha',
-        html: `<html><body>Olá, clique <a href='${BASE_URL_SERVER}/redirect-change-password/${email}'>aqui</a> para redefinir sua senha.
+        html: `<html><body>Olá, clique <a href='${BASE_URL_SERVER}/redirect-change-password/${uuidTokenChangePassword}'>aqui</a> para redefinir sua senha.
         <BR><BR> Tenha um ótimo uso da plataforma!</body></html>`        
     };
 
