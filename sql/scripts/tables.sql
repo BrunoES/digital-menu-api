@@ -34,7 +34,7 @@ CREATE TABLE `digital_menu`.`pedidos` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=81 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
 
-CREATE TABLE `digital_menu`.`digital_menu`.`company` (
+CREATE TABLE `digital_menu`.`company` (
   `id` int NOT NULL AUTO_INCREMENT,
   `name` varchar(60) COLLATE utf8_unicode_ci NOT NULL,
   `active` tinyint DEFAULT NULL,
