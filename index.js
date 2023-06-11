@@ -8,47 +8,51 @@ const { v4: uuidv4 } = require('uuid');
 const QRCode = require('qrcode');
 const nodemailer = require('nodemailer');
 
-const cors = corsMiddleware({
-  origins: ["*"], // ""http://localhost:9091" http://localhost:3000"
-  allowHeaders: ["Access-Control-Allow-Origin", "*"],
-  exposeHeaders: ["*"]
-});
-
-var con = mysql.createConnection({
-    host: "localhost",
-    user: "root",
-    password: "1234"
-});
-
-const server = restify.createServer({
-  name: "digital-menu-api",
-  version: "1.0.0"
-});
-
-const mailTransporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: 'suporte.cardapil@gmail.com',
-        pass: 'pdktiohicekupata'
-    }
-});
-
 const TOKEN_NAME = 'Authorization';
 const sep = path.sep;
 const pathImages = `.${sep}${sep}media${sep}${sep}imgs`;
 const pathQRCodes = `.${sep}${sep}media${sep}${sep}qrcodes`;
 
-const BASE_URL_QRCODE_MESA = 'http://192.168.0.18:3000';
+const BASE_IP = '177.124.114.151';
+const BASE_IP_DB = '177.124.114.151';
+
+const BASE_URL_QRCODE_MESA = `http://${BASE_IP}:3000`;
+//const BASE_URL_QRCODE_MESA = 'http://192.168.0.18:3000';
 //const BASE_URL_QRCODE_MESA = 'https://www.cardapil.com.br';
 
-const BASE_URL_SERVER = 'http://localhost:8080';
-const BASE_URL_FRONTEND = 'http://localhost:9091';
+const BASE_URL_SERVER = `http://${BASE_IP}:8080`;
+const BASE_URL_FRONTEND = `http://${BASE_IP}:9091`;
 
 const REDIRECT_LOGIN = `${BASE_URL_FRONTEND}/login`;
 const REDIRECT_USER_ACTIVATED = `${BASE_URL_FRONTEND}/user-activated`;
 const REDIRECT_CHANGE_PASSWORD = `${BASE_URL_FRONTEND}/change-password`;
 
 const TO_CHANGE = "TO_CHANGE";
+
+const cors = corsMiddleware({
+    origins: ["*"], // ""http://localhost:9091" http://localhost:3000"
+    allowHeaders: ["Access-Control-Allow-Origin", "*"],
+    exposeHeaders: ["*"]
+  });
+  
+  var con = mysql.createConnection({
+      host: BASE_IP_DB,
+      user: "root",
+      password: "1234"
+  });
+  
+  const server = restify.createServer({
+    name: "digital-menu-api",
+    version: "1.0.0"
+  });
+  
+  const mailTransporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+          user: 'suporte.cardapil@gmail.com',
+          pass: 'pdktiohicekupata'
+      }
+  });
 
 server.use(restify.plugins.bodyParser({ mapParams: true }));
 server.use(restify.plugins.acceptParser(server.acceptable));
