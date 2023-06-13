@@ -13,8 +13,8 @@ const sep = path.sep;
 const pathImages = `.${sep}${sep}media${sep}${sep}imgs`;
 const pathQRCodes = `.${sep}${sep}media${sep}${sep}qrcodes`;
 
-const BASE_IP = '177.124.114.151';
-const BASE_IP_DB = '177.124.114.151';
+const BASE_IP = 'localhost';
+const BASE_IP_DB = 'digital-menu-db-0.onrender.com';
 
 const BASE_URL_QRCODE_MESA = `http://${BASE_IP}:3000`;
 //const BASE_URL_QRCODE_MESA = 'http://192.168.0.18:3000';
