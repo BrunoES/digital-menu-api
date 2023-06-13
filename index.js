@@ -14,7 +14,7 @@ const pathImages = `.${sep}${sep}media${sep}${sep}imgs`;
 const pathQRCodes = `.${sep}${sep}media${sep}${sep}qrcodes`;
 
 const BASE_IP = 'localhost';
-const BASE_IP_DB = 'digital-menu-db-0.onrender.com';
+const BASE_IP_DB = 'aws.connect.psdb.cloud';
 
 const BASE_URL_QRCODE_MESA = `http://${BASE_IP}:3000`;
 //const BASE_URL_QRCODE_MESA = 'http://192.168.0.18:3000';
@@ -37,8 +37,8 @@ const cors = corsMiddleware({
   
   var con = mysql.createConnection({
       host: BASE_IP_DB,
-      user: "root",
-      password: "1234"
+      user: "ys7vsalmafwtqvcy2mpo",
+      password: "pscale_pw_umtVC5kH4H0I8mJJPHhvp3SGSM3uwNsIqdr8KDswoUY"
   });
   
   const server = restify.createServer({
