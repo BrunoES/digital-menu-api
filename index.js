@@ -35,12 +35,16 @@ const cors = corsMiddleware({
     exposeHeaders: ["*"]
   });
   
+  const con = mysql.createConnection(BASE_IP_DB);
+
+  /*
   var con = mysql.createConnection({
       host: BASE_IP_DB,
       user: "ys7vsalmafwtqvcy2mpo",
       password: "pscale_pw_umtVC5kH4H0I8mJJPHhvp3SGSM3uwNsIqdr8KDswoUY"
   });
-  
+  */
+
   const server = restify.createServer({
     name: "digital-menu-api",
     version: "1.0.0"
