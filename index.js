@@ -1,5 +1,5 @@
 const restify = require("restify");
-const mysql = require("mysql");
+const mysql = require("mysql2");
 const corsMiddleware = require("restify-cors-middleware2");
 
 const fs = require("fs");
@@ -14,7 +14,7 @@ const pathImages = `.${sep}${sep}media${sep}${sep}imgs`;
 const pathQRCodes = `.${sep}${sep}media${sep}${sep}qrcodes`;
 
 const BASE_IP = 'localhost';
-const BASE_IP_DB = 'aws.connect.psdb.cloud/digital_menu?sslMode=VERIFY_IDENTITY';
+const BASE_IP_DB = 'mysql://ys7vsalmafwtqvcy2mpo:pscale_pw_umtVC5kH4H0I8mJJPHhvp3SGSM3uwNsIqdr8KDswoUY@aws.connect.psdb.cloud/digital_menu?ssl={"rejectUnauthorized":true}';
 
 const BASE_URL_QRCODE_MESA = `http://${BASE_IP}:3000`;
 //const BASE_URL_QRCODE_MESA = 'http://192.168.0.18:3000';

@@ -1,3 +1,5 @@
+CREATE SCHEMA IF NOT EXISTS `digital_menu` DEFAULT CHARACTER SET utf8 ;
+
 CREATE TABLE `digital_menu`.`clientes` (
   `id` int NOT NULL AUTO_INCREMENT,
   `customer_name` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
