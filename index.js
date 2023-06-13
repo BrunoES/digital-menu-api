@@ -14,7 +14,7 @@ const pathImages = `.${sep}${sep}media${sep}${sep}imgs`;
 const pathQRCodes = `.${sep}${sep}media${sep}${sep}qrcodes`;
 
 const BASE_IP = 'localhost';
-const BASE_IP_DB = 'aws.connect.psdb.cloud?ssl={"rejectUnauthorized":false}&sslcert=/etc/ssl/certs/ca-certificates.crt';
+const BASE_IP_DB = 'aws.connect.psdb.cloud?sslaccept=strict';
 
 const BASE_URL_QRCODE_MESA = `http://${BASE_IP}:3000`;
 //const BASE_URL_QRCODE_MESA = 'http://192.168.0.18:3000';
