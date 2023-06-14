@@ -35,10 +35,7 @@ const cors = corsMiddleware({
     exposeHeaders: ["*"]
   });
   
-  const con = mysql.createConnection({
-    host: BASE_IP_DB,
-    port: 3306
-  });
+  const con = mysql.createConnection(BASE_IP_DB);
 
   /*
   var con = mysql.createConnection({
