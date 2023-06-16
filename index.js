@@ -35,7 +35,14 @@ const cors = corsMiddleware({
     exposeHeaders: ["*"]
   });
   
-  const con = mysql.createConnection(BASE_IP_DB);
+var dbConfig = {
+    host    :'aws.connect.psdb.cloud',
+    user    :'6ftynju4igeodxkgzfyj',
+    password:'pscale_pw_g9LKxW27Ly5taLkQa8Y0BY8Rzoj2ZgXEs4CRV5i3q3d',
+    port    :'3306',
+    database:'digital_menu'
+}
+const con = mysql.createConnection(dbConfig);
 
   /*
   var con = mysql.createConnection({
