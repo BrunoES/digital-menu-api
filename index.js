@@ -14,7 +14,7 @@ const pathImages = `.${sep}${sep}media${sep}${sep}imgs`;
 const pathQRCodes = `.${sep}${sep}media${sep}${sep}qrcodes`;
 
 const BASE_IP = 'localhost';
-const BASE_IP_DB = 'mysql://mcc91ioe14v4p229tdz6:pscale_pw_s8DATfEx8kEToEFERHlsYx0wtV0IFjOMXtFCq0KU0PV@aws.connect.psdb.cloud/digital_menu?ssl={"rejectUnauthorized":true}';
+const BASE_IP_DB = 'mysql://zlutx48lv8i5ct9k96yl:pscale_pw_xV3a0USpnHirKC4U1agq4pAKSDMtF3wIXshpltPznkf@aws.connect.psdb.cloud/digital_menu?ssl={"rejectUnauthorized":true}';
 
 const BASE_URL_QRCODE_MESA = `http://${BASE_IP}:3000`;
 //const BASE_URL_QRCODE_MESA = 'http://192.168.0.18:3000';
