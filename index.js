@@ -34,15 +34,14 @@ const cors = corsMiddleware({
     allowHeaders: ["Access-Control-Allow-Origin", "*"],
     exposeHeaders: ["*"]
   });
-  
-var dbConfig = {
-    host    :'aws.connect.psdb.cloud',
-    user    :'6ftynju4igeodxkgzfyj',
-    password:'pscale_pw_g9LKxW27Ly5taLkQa8Y0BY8Rzoj2ZgXEs4CRV5i3q3d',
-    port    :'3306',
-    database:'digital_menu'
-}
-const con = mysql.createConnection(dbConfig);
+
+const con = mysql.createConnection({
+    host    : 'aws.connect.psdb.cloud',
+    user    : '6ftynju4igeodxkgzfyj',
+    password: 'pscale_pw_g9LKxW27Ly5taLkQa8Y0BY8Rzoj2ZgXEs4CRV5i3q3d',
+    port    : '3306',
+    database: 'digital_menu'
+});
 
   /*
   var con = mysql.createConnection({
