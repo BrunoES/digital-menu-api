@@ -14,7 +14,7 @@ const pathImages = `.${sep}${sep}media${sep}${sep}imgs`;
 const pathQRCodes = `.${sep}${sep}media${sep}${sep}qrcodes`;
 
 const BASE_IP = 'localhost';
-const BASE_IP_DB = 'mysql://lxhqfsb71bicedbhwral:pscale_pw_Yz3BZwP4kZcIFJmWxzJXbuih3otUlcJKSBnL4i6GdCB@aws.connect.psdb.cloud/digital_menu?ssl={"rejectUnauthorized":true}';
+const BASE_IP_DB = 'mysql://6ftynju4igeodxkgzfyj:pscale_pw_g9LKxW27Ly5taLkQa8Y0BY8Rzoj2ZgXEs4CRV5i3q3d@aws.connect.psdb.cloud/digital_menu?ssl={"rejectUnauthorized":false}&sslcert=/etc/ssl/certs/ca-certificates.crt';
 
 const BASE_URL_QRCODE_MESA = `http://${BASE_IP}:3000`;
 //const BASE_URL_QRCODE_MESA = 'http://192.168.0.18:3000';
@@ -35,6 +35,9 @@ const cors = corsMiddleware({
     exposeHeaders: ["*"]
   });
 
+const con = mysql.createConnection(BASE_IP_DB);
+
+/*
 const con = mysql.createConnection({
     host    : 'aws.connect.psdb.cloud',
     user    : '6ftynju4igeodxkgzfyj',
@@ -42,7 +45,7 @@ const con = mysql.createConnection({
     port    : '3306',
     database: 'digital_menu'
 });
-
+*/
   /*
   var con = mysql.createConnection({
       host: BASE_IP_DB,
