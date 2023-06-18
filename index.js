@@ -36,7 +36,7 @@ const cors = corsMiddleware({
   });
 
 //const con = mysql.createConnection(BASE_IP_DB);
-const con = mysql.createConnection('mysql://cjk6jq40t0sradwj6j7z:pscale_pw_Q37WbuivGmGUAcxXQNt0xWNsdKOLdrQhSHHVKf2VHEb@aws.connect.psdb.cloud/digital_menu?ssl={"rejectUnauthorized":true}')
+const con = mysql.createConnection('mysql://hkqbmpryk56ange8ystu:pscale_pw_wGxoqO8d9P5KiV979rN9hS8VhzyoxE5y9EjRXsEmUYj@aws.connect.psdb.cloud/digital_menu?ssl={"rejectUnauthorized":true}')
 
 
 /*
