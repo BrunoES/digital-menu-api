@@ -35,7 +35,9 @@ const cors = corsMiddleware({
     exposeHeaders: ["*"]
   });
 
-const con = mysql.createConnection(BASE_IP_DB);
+//const con = mysql.createConnection(BASE_IP_DB);
+const con = mysql.createConnection('mysql://cjk6jq40t0sradwj6j7z:pscale_pw_Q37WbuivGmGUAcxXQNt0xWNsdKOLdrQhSHHVKf2VHEb@aws.connect.psdb.cloud/digital_menu?ssl={"rejectUnauthorized":true}')
+
 
 /*
 const con = mysql.createConnection({
