@@ -14,11 +14,12 @@ const sep = path.sep;
 const pathImages = `.${sep}${sep}media${sep}${sep}imgs`;
 const pathQRCodes = `.${sep}${sep}media${sep}${sep}qrcodes`;
 
-const BASE_IP = 'https://digital-menu-api-0.onrender.com';
+const BASE_IP = 'digital-menu-api-0.onrender.com';
+const BASE_FRONT_IP = 'digital-menu-backoffice-0.onrender.com';
+const BASE_URL_SERVER = `https://${BASE_IP}:8080`;
+const BASE_URL_FRONTEND = `https://${BASE_FRONT_IP}:9091`;
 
-const BASE_URL_SERVER = `http://${BASE_IP}:8080`;
 const BASE_URL_QRCODE_MESA = `http://${BASE_IP}:3000`;
-const BASE_URL_FRONTEND = `https://digital-menu-backoffice-0.onrender.com:9091`;
 
 const REDIRECT_LOGIN = `${BASE_URL_FRONTEND}/login`;
 const REDIRECT_USER_ACTIVATED = `${BASE_URL_FRONTEND}/user-activated`;
