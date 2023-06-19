@@ -1,6 +1,6 @@
 require('dotenv').config()
 const restify = require("restify");
-const mysql = require("mysql2");
+const mysql = require("mysql");
 const corsMiddleware = require("restify-cors-middleware2");
 
 const fs = require("fs");
