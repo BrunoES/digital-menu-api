@@ -36,7 +36,17 @@ const cors = corsMiddleware({
     exposeHeaders: ["*"]
   });
 
- var con = mysql.createConnection(process.env.DATABASE_URL);
+ var con = mysql.createConnection({
+    host     : process.env.HOST,
+    user     : process.env.USER,
+    password : process.env.PASS,
+    database : process.env.DATABASE,
+    ssl  : {
+        // DO NOT DO THIS
+        // set up your ca correctly to trust the connection
+        rejectUnauthorized: false
+      }
+  });
 
   const server = restify.createServer({
     name: "digital-menu-api",
