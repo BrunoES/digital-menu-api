@@ -37,10 +37,10 @@ const cors = corsMiddleware({
   });
 
  var con = mysql.createConnection({
-    host     : process.env.HOST,
-    user     : process.env.USER,
-    password : process.env.PASS,
-    database : process.env.DATABASE,
+    host     : process.env.HOST_MYSQL,
+    user     : process.env.USER_MYSQL,
+    password : process.env.PASS_MYSQL,
+    database : process.env.DATABASE_MYSQL,
     ssl  : {
         // DO NOT DO THIS
         // set up your ca correctly to trust the connection
