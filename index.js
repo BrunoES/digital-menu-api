@@ -36,36 +36,7 @@ const cors = corsMiddleware({
     exposeHeaders: ["*"]
   });
 
-//const con = mysql.createConnection(BASE_IP_DB);
-//const con = mysql.createConnection(process.env.DATABASE_URL);
-/*
-var con = mysql.createConnection({
-    host     : 'aws.connect.psdb.cloud',
-    user     : 't6focnmxl3x8gzkgd0ze',
-    password : 'pscale_pw_XSC9VRvpSEc8yaiJg6a8aVY82yHSEFt81GIak1kzogZ',
-    database : 'digital_menu'
-  });
-*/
-
-var con = mysql.createConnection(process.env.DATABASE_URL);
-
-
-/*
-const con = mysql.createConnection({
-    host    : 'aws.connect.psdb.cloud',
-    user    : '6ftynju4igeodxkgzfyj',
-    password: 'pscale_pw_g9LKxW27Ly5taLkQa8Y0BY8Rzoj2ZgXEs4CRV5i3q3d',
-    port    : '3306',
-    database: 'digital_menu'
-});
-*/
-  /*
-  var con = mysql.createConnection({
-      host: BASE_IP_DB,
-      user: "ys7vsalmafwtqvcy2mpo",
-      password: "pscale_pw_umtVC5kH4H0I8mJJPHhvp3SGSM3uwNsIqdr8KDswoUY"
-  });
-  */
+ var con = mysql.createConnection(process.env.DATABASE_URL);
 
   const server = restify.createServer({
     name: "digital-menu-api",
