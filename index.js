@@ -15,14 +15,10 @@ const pathImages = `.${sep}${sep}media${sep}${sep}imgs`;
 const pathQRCodes = `.${sep}${sep}media${sep}${sep}qrcodes`;
 
 const BASE_IP = 'localhost';
-const BASE_IP_DB = 'mysql://3j0qq9io32xqorb45tmi:pscale_pw_1FjEmrBrWecLqMpqdjqKUaHb61nhbWnMwcKDt4IoXO8@aws.connect.psdb.cloud/digital_menu?ssl={"rejectUnauthorized":true}';
-
-const BASE_URL_QRCODE_MESA = `http://${BASE_IP}:3000`;
-//const BASE_URL_QRCODE_MESA = 'http://192.168.0.18:3000';
-//const BASE_URL_QRCODE_MESA = 'https://www.cardapil.com.br';
 
 const BASE_URL_SERVER = `http://${BASE_IP}:8080`;
-const BASE_URL_FRONTEND = `http://${BASE_IP}:9091`;
+const BASE_URL_QRCODE_MESA = `http://${BASE_IP}:3000`;
+const BASE_URL_FRONTEND = `https://digital-menu-backoffice-0.onrender.com:9091`;
 
 const REDIRECT_LOGIN = `${BASE_URL_FRONTEND}/login`;
 const REDIRECT_USER_ACTIVATED = `${BASE_URL_FRONTEND}/user-activated`;
