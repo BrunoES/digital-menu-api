@@ -14,7 +14,7 @@ const sep = path.sep;
 const pathImages = `.${sep}${sep}media${sep}${sep}imgs`;
 const pathQRCodes = `.${sep}${sep}media${sep}${sep}qrcodes`;
 
-const BASE_IP = 'localhost';
+const BASE_IP = 'https://digital-menu-api-0.onrender.com';
 
 const BASE_URL_SERVER = `http://${BASE_IP}:8080`;
 const BASE_URL_QRCODE_MESA = `http://${BASE_IP}:3000`;
