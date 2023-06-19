@@ -1,3 +1,4 @@
+require('dotenv').config()
 const restify = require("restify");
 const mysql = require("mysql2");
 const corsMiddleware = require("restify-cors-middleware2");
@@ -36,7 +37,7 @@ const cors = corsMiddleware({
   });
 
 //const con = mysql.createConnection(BASE_IP_DB);
-const con = mysql.createConnection('mysql://9ay01f3102yr7ah3e130:pscale_pw_F4yJr34xrmeyNS6g08iKw3dvgy7GM1iIrBdivwEpsSf@aws.connect.psdb.cloud/digital_menu?ssl={"rejectUnauthorized":true}');
+const con = mysql.createConnection(process.env.DATABASE_URL);
 
 /*
 const con = mysql.createConnection({
