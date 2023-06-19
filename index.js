@@ -47,7 +47,7 @@ var con = mysql.createConnection({
   });
 */
 
-var con = mysql.createConnection('mysql://t6focnmxl3x8gzkgd0ze:pscale_pw_XSC9VRvpSEc8yaiJg6a8aVY82yHSEFt81GIak1kzogZ@aws.connect.psdb.cloud/digital_menu?ssl={"rejectUnauthorized":true}');
+var con = mysql.createConnection(process.env.DATABASE_URL);
 
 
 /*
