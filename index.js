@@ -41,6 +41,7 @@ const cors = corsMiddleware({
     user     : process.env.USER_MYSQL,
     password : process.env.PASS_MYSQL,
     database : process.env.DATABASE_MYSQL,
+    socketPath: '/var/run/mysqld/mysqld.sock',
     ssl  : {
         // DO NOT DO THIS
         // set up your ca correctly to trust the connection
