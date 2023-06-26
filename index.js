@@ -29,7 +29,7 @@ const TO_CHANGE = "TO_CHANGE";
 
 const cors = corsMiddleware({
     origins: ["http://digital-menu-backoffice-0.onrender.com", "http://216.24.57.3", "https://digital-menu-backoffice-0.onrender.com", "https://216.24.57.3"], // ""http://localhost:9091" http://localhost:3000"
-    allowHeaders: ["Access-Control-Allow-Origin", "*"],
+    allowHeaders: ["Access-Control-Allow-Origin", "https://digital-menu-backoffice-0.onrender.com"],
     exposeHeaders: ["*"]
   });
 
