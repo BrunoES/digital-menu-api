@@ -199,13 +199,13 @@ function invalidaInsereUserTokens(email, token, res) {
             if (!handleError(err, res)) return;
             console.log(result);
 
-            if(result.affectedRows == 0) {      
+            /*if(result.affectedRows == 0) {      
                 console.log(`Nenhum token invalidado para o user ${email}`);
-            } else {
+            } else {*/
                 if(token != "") {
                     insereUserToken(email, token, res);
                 }
-            }
+            //}
         });
     } catch(e) {
         handleError(e ,res);
